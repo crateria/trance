@@ -1,6 +1,6 @@
 [package]
 name = "trance-daemon"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 description = "Background idle daemon and core package for trance screensavers"
 license = "MIT"
@@ -23,6 +23,7 @@ extended-description = "Background idle monitoring service for trance screensave
 depends = "libc6, trance-plugin-beams, trance-plugin-bursts, trance-plugin-chaos, trance-plugin-cosmos, trance-plugin-glyphs, trance-plugin-gnats, trance-plugin-storm"
 section = "utils"
 priority = "optional"
+maintainer-scripts = "debian"
 assets = [
     ["target/release/trance-daemon", "usr/bin/trance-daemon", "755"],
     ["assets/trance-daemon.service", "usr/lib/systemd/user/trance-daemon.service", "644"],
@@ -31,7 +32,7 @@ assets = [
 
 [package.metadata.generate-rpm]
 name = "trance"
-version = "0.1.7"
+version = "0.1.8"
 release = "1"
 arch = "x86_64"
 summary = "Background idle daemon and core package for trance screensavers"
