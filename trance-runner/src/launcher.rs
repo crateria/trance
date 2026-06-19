@@ -129,7 +129,7 @@ pub fn resolve_saver_binary(name: &str, mode: &LaunchMode) -> std::io::Result<Pa
 pub fn prepare_xterm_command(binary: &Path, mode: LaunchMode) -> Command {
     let mut cmd = Command::new("xterm");
     let current_exe = std::env::current_exe()
-        .unwrap_or_else(|_| PathBuf::from("trance"));
+        .unwrap_or_else(|_| PathBuf::from("trance-daemon"));
 
     match mode {
         LaunchMode::Daemon | LaunchMode::Preview => {

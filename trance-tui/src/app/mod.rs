@@ -150,9 +150,7 @@ pub fn run_app() -> Result<(), Box<dyn std::error::Error>> {
                                     state.status_message =
                                         "requested daemon process to stop.".to_string();
                                 } else {
-                                    let current_exe =
-                                        std::env::current_exe().unwrap_or_else(|_| "trance".into());
-                                    let _ = std::process::Command::new(current_exe)
+                                    let _ = std::process::Command::new("trance-daemon")
                                         .arg("daemon")
                                         .stdout(std::process::Stdio::null())
                                         .stderr(std::process::Stdio::null())
