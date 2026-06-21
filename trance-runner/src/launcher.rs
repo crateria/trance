@@ -18,6 +18,9 @@ pub enum LaunchMode {
 
 /// Whether `name` resolves to a built-in screensaver package.
 pub fn is_allowed_saver(name: &str) -> bool {
+    if name.contains('/') || name.contains('\\') {
+        return false;
+    }
     sanitize_saver_name(name)
         .as_deref()
         .is_some_and(|clean| ALLOWED_SAVERS.contains(&clean))
@@ -91,6 +94,12 @@ fn trusted_plugin_dirs(clean: &str, mode: &LaunchMode) -> Vec<PathBuf> {
 
 /// Resolve a saver name to a trusted plugin library path.
 pub fn resolve_saver_binary(name: &str, mode: &LaunchMode) -> std::io::Result<PathBuf> {
+    if name.contains('/') || name.contains('\\') {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("saver name must not be a path: {name}"),
+        ));
+    }
     let clean = sanitize_saver_name(name).ok_or_else(|| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidInput,

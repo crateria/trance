@@ -7,9 +7,10 @@ use zbus::Connection;
 
 const TRUSTED_CONTROL_PEERS: &[&str] = &["trance", "trance-applet"];
 
+#[cfg(test)]
 fn peer_exe_basename(pid: u32) -> Option<String> {
     let path = format!("/proc/{pid}/exe");
-    let target = std::fs::read_link(path).ok()?;
+    let target = std::fs::canonicalize(path).ok()?;
     target
         .file_name()
         .and_then(|name| name.to_str())
@@ -20,7 +21,30 @@ fn is_trusted_control_peer(pid: u32) -> bool {
     if std::env::var("TRANCE_DBUS_TRUST_ALL").ok().as_deref() == Some("1") {
         return true;
     }
-    peer_exe_basename(pid).is_some_and(|name| TRUSTED_CONTROL_PEERS.contains(&name.as_str()))
+    let path = format!("/proc/{pid}/exe");
+    let target = match std::fs::canonicalize(path) {
+        Ok(t) => t,
+        Err(_) => return false,
+    };
+    let name = match target.file_name().and_then(|n| n.to_str()) {
+        Some(n) => n,
+        None => return false,
+    };
+    if !TRUSTED_CONTROL_PEERS.contains(&name) {
+        return false;
+    }
+    let parent = target.parent().and_then(|p| p.to_str()).unwrap_or("");
+    parent == "/usr/bin" || parent == "/usr/local/bin" || {
+        if let Ok(current_exe) = std::env::current_exe() {
+            if let Ok(current_canonical) = std::fs::canonicalize(current_exe) {
+                target.parent() == current_canonical.parent()
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
 }
 
 /// Control methods (preview, config writes) require trance CLI or applet.

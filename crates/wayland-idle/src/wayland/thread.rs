@@ -106,7 +106,9 @@ fn dispatch_pending_events(
 
 fn apply_timeout_updates(state: &mut SessionState, timeout_rx: &Receiver<u32>) {
     while let Ok(timeout_mins) = timeout_rx.try_recv() {
-        state.timeout_mins = timeout_mins;
-        state.refresh_idle_notification();
+        if state.timeout_mins != timeout_mins {
+            state.timeout_mins = timeout_mins;
+            state.refresh_idle_notification();
+        }
     }
 }

@@ -6,7 +6,14 @@ use trance_api::MonitorCellBounds;
 use trance_runner::plugin_session::PluginSession;
 use wayland_present::OutputLayout;
 
-static PRIMARY_BOUNDS: OnceLock<RwLock<MonitorCellBounds>> = OnceLock::new();
+#[derive(Clone, Copy)]
+struct ScaledBoundsState {
+    bounds: MonitorCellBounds,
+    initial_cols: usize,
+    initial_rows: usize,
+}
+
+static PRIMARY_BOUNDS_STATE: OnceLock<RwLock<ScaledBoundsState>> = OnceLock::new();
 
 pub fn normalize_layout_positions(layouts: &mut [OutputLayout]) {
     if layouts.len() <= 1 {
@@ -110,18 +117,33 @@ pub fn primary_bounds_in_grid(
     )
 }
 
-pub fn install_primary_bounds_callback(bounds: MonitorCellBounds) {
-    let _ = PRIMARY_BOUNDS.set(RwLock::new(bounds));
-    let _ = trance_api::MONITOR_BOUNDS_CALLBACK.set(|_cols, _rows| {
-        PRIMARY_BOUNDS
+pub fn install_primary_bounds_callback(bounds: MonitorCellBounds, initial_cols: usize, initial_rows: usize) {
+    let _ = PRIMARY_BOUNDS_STATE.set(RwLock::new(ScaledBoundsState {
+        bounds,
+        initial_cols: initial_cols.max(1),
+        initial_rows: initial_rows.max(1),
+    }));
+    let _ = trance_api::MONITOR_BOUNDS_CALLBACK.set(|cols, rows| {
+        PRIMARY_BOUNDS_STATE
             .get()
             .and_then(|lock| lock.read().ok())
-            .map(|guard| *guard)
+            .map(|guard| {
+                let state = *guard;
+                let col_scale = cols as f32 / state.initial_cols as f32;
+                let row_scale = rows as f32 / state.initial_rows as f32;
+                MonitorCellBounds {
+                    start_col: (state.bounds.start_col as f32 * col_scale).round() as usize,
+                    end_col: (state.bounds.end_col as f32 * col_scale).round() as usize,
+                    start_row: (state.bounds.start_row as f32 * row_scale).round() as usize,
+                    end_row: (state.bounds.end_row as f32 * row_scale).round() as usize,
+                    is_primary: state.bounds.is_primary,
+                }
+            })
             .unwrap_or(MonitorCellBounds {
                 start_col: 0,
-                end_col: 0,
+                end_col: cols,
                 start_row: 0,
-                end_row: 0,
+                end_row: rows,
                 is_primary: true,
             })
     });

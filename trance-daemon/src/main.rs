@@ -27,6 +27,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 std::process::exit(1);
             }
             let name = &args[2];
+            if name.contains('/') || name.contains('\\') {
+                eprintln!("error: saver name must not be a path");
+                std::process::exit(1);
+            }
             let path = trance_runner::launcher::resolve_saver_binary(
                 name,
                 &trance_runner::launcher::LaunchMode::Preview,

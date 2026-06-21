@@ -31,8 +31,6 @@ pub fn run_plugin_loop(
         return Err("no configured outputs for screensaver presentation".into());
     }
 
-    normalize_layout_positions(&mut layouts);
-
     for layout in &layouts {
         println!(
             "trance-daemon: output {} @ ({}, {}) — {}x{} @ {} Hz",
@@ -65,13 +63,14 @@ pub fn run_plugin_loop(
             (primary.width, primary.height, 0usize, 0usize)
         }
         DisplayMode::Span => {
+            normalize_layout_positions(&mut layouts);
             let (min_x, min_y, total_w, total_h) = virtual_desktop(&layouts);
             let (cols, rows) = span_simulation_grid(&session, total_w, total_h);
             let primary_bounds = primary_bounds_in_grid(
                 primary, min_x, min_y, total_w, total_h, cols, rows,
             );
             trance_api::publish_primary_bounds(primary_bounds);
-            install_primary_bounds_callback(primary_bounds);
+            install_primary_bounds_callback(primary_bounds, cols, rows);
             unsafe {
                 std::env::set_var("TRANCE_SPAN_MODE", "1");
             }
