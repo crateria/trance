@@ -204,7 +204,6 @@ impl AppModel {
             daemon_running: false,
             gpu_enabled: true,
             show_fps_overlay: false,
-            display_mode: "primary".to_string(),
             popup: None,
         };
         app.refresh_daemon_state();

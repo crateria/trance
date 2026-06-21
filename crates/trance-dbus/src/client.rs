@@ -38,8 +38,6 @@ trait Trance {
 
     fn set_show_fps_overlay(&self, enabled: bool) -> zbus::Result<()>;
 
-    fn set_display_mode(&self, mode: &str) -> zbus::Result<()>;
-
     fn set_render_scale(&self, scale: f64) -> zbus::Result<()>;
 }
 
@@ -102,10 +100,6 @@ impl TranceClient {
         self.proxy()?.set_show_fps_overlay(enabled)
     }
 
-    pub fn set_display_mode(&self, mode: &str) -> zbus::Result<()> {
-        self.proxy()?.set_display_mode(mode)
-    }
-
     pub fn set_render_scale(&self, scale: f32) -> zbus::Result<()> {
         self.proxy()?.set_render_scale(f64::from(scale))
     }
@@ -129,7 +123,6 @@ fn parse_status(map: HashMap<String, OwnedValue>) -> zbus::Result<DaemonStatus> 
         current_saver: read_string(&map, "current_saver"),
         gpu_enabled: read_bool(&map, "gpu_enabled"),
         show_fps_overlay: read_bool(&map, "show_fps_overlay"),
-        display_mode: read_string(&map, "display_mode"),
         render_scale: read_string(&map, "render_scale"),
     })
 }

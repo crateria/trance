@@ -1,32 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
-
 use trance_api::caption_text;
 use trance_runner::{caption_overlay, fps_overlay};
 use trance_runner::toolkit::theme_query;
-
-pub fn black_frame_into(
-    cache: &mut HashMap<(u32, u32), Vec<u8>>,
-    width: u32,
-    height: u32,
-    out: &mut Vec<u8>,
-) {
-    let key = (width, height);
-    if !cache.contains_key(&key) {
-        let len = (width as usize)
-            .saturating_mul(height as usize)
-            .saturating_mul(4);
-        let mut pixels = vec![0u8; len];
-        for alpha in pixels.iter_mut().skip(3).step_by(4) {
-            *alpha = 0xFF;
-        }
-        cache.insert(key, pixels);
-    }
-    let cached = cache.get(&key).expect("black frame cache");
-    out.resize(cached.len(), 0);
-    out.copy_from_slice(cached);
-}
 
 pub fn maybe_draw_overlays(
     pixels: &mut [u8],

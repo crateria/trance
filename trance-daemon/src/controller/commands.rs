@@ -58,16 +58,7 @@ impl DaemonController {
                 self.mark_dirty();
                 Ok(())
             }
-            DaemonCommand::SetDisplayMode(mode) => {
-                if trance_runner::plugin_meta::parse_display_mode(&mode).is_none() {
-                    return Err("display_mode must be primary, mirror, expand, or span".into());
-                }
-                let mut config = self.config.lock().unwrap();
-                config.display_mode = mode;
-                config.save().map_err(|error| error.to_string())?;
-                self.mark_dirty();
-                Ok(())
-            }
+
             DaemonCommand::SetRenderScale(scale) => {
                 let stored = match scale {
                     None => None,

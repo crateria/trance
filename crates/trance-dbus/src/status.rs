@@ -20,7 +20,6 @@ pub struct DaemonStatus {
     pub current_saver: String,
     pub gpu_enabled: bool,
     pub show_fps_overlay: bool,
-    pub display_mode: String,
     pub render_scale: String,
 }
 
@@ -39,7 +38,6 @@ impl DaemonStatus {
         map.insert("current_saver".into(), owned(self.current_saver.clone()));
         map.insert("gpu_enabled".into(), owned(self.gpu_enabled));
         map.insert("show_fps_overlay".into(), owned(self.show_fps_overlay));
-        map.insert("display_mode".into(), owned(self.display_mode.clone()));
         map.insert("render_scale".into(), owned(self.render_scale.clone()));
         map
     }

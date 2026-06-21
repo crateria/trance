@@ -21,7 +21,6 @@ pub struct AppModel {
     pub(crate) daemon_running: bool,
     pub(crate) gpu_enabled: bool,
     pub(crate) show_fps_overlay: bool,
-    pub(crate) display_mode: String,
 }
 
 impl Default for AppModel {
@@ -35,7 +34,6 @@ impl Default for AppModel {
             daemon_running: false,
             gpu_enabled: true,
             show_fps_overlay: false,
-            display_mode: "primary".to_string(),
         }
     }
 }

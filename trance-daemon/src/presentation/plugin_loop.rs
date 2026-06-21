@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 use std::time::{Duration, Instant};
 
 use trance_api::{clear_caption, clear_primary_bounds};
 use trance_gpu::{simulation_tick_hz, target_fps};
-use trance_runner::plugin_meta::{display_mode_for, DisplayMode};
 use trance_runner::plugin_session::PluginSession;
 use wayland_present::OverlayPresenter;
 
@@ -38,12 +36,6 @@ pub fn run_plugin_loop(
         );
     }
 
-    let display_mode = display_mode_for(saver_name, Some(options.display_mode));
-    println!(
-        "trance-daemon: display mode for '{saver_name}': {:?}",
-        display_mode
-    );
-
     let mut session = PluginSession::load_with_options(
         saver_name,
         &options.launch_mode,
@@ -57,39 +49,20 @@ pub fn run_plugin_loop(
         .copied()
         .ok_or_else(|| "no primary output found".to_string())?;
 
-    let (_virtual_w, _virtual_h, virtual_cols, virtual_rows) = match display_mode {
-        DisplayMode::Expand => (primary.width, primary.height, 0usize, 0usize),
-        DisplayMode::Mirror | DisplayMode::PrimaryOnly => {
-            (primary.width, primary.height, 0usize, 0usize)
-        }
-        DisplayMode::Span => {
-            normalize_layout_positions(&mut layouts);
-            let (min_x, min_y, total_w, total_h) = virtual_desktop(&layouts);
-            let (cols, rows) = span_simulation_grid(&session, total_w, total_h);
-            let primary_bounds = primary_bounds_in_grid(
-                primary, min_x, min_y, total_w, total_h, cols, rows,
-            );
-            trance_api::publish_primary_bounds(primary_bounds);
-            install_primary_bounds_callback(primary_bounds, cols, rows);
-            unsafe {
-                std::env::set_var("TRANCE_SPAN_MODE", "1");
-            }
-            let _ = trance_api::IS_SECONDARY_MONITOR_CALLBACK.set(|| false);
-            (total_w, total_h, cols, rows)
-        }
-    };
-
-    match display_mode {
-        DisplayMode::Expand
-        | DisplayMode::Mirror
-        | DisplayMode::PrimaryOnly => {
-            let (cols, rows) = session.grid_for_pixels(primary.width, primary.height);
-            session.init(cols, rows);
-        }
-        DisplayMode::Span => {
-            session.init(virtual_cols, virtual_rows);
-        }
+    normalize_layout_positions(&mut layouts);
+    let (min_x, min_y, total_w, total_h) = virtual_desktop(&layouts);
+    let (virtual_cols, virtual_rows) = span_simulation_grid(&session, total_w, total_h);
+    let primary_bounds = primary_bounds_in_grid(
+        primary, min_x, min_y, total_w, total_h, virtual_cols, virtual_rows,
+    );
+    trance_api::publish_primary_bounds(primary_bounds);
+    install_primary_bounds_callback(primary_bounds, virtual_cols, virtual_rows);
+    unsafe {
+        std::env::set_var("TRANCE_SPAN_MODE", "1");
     }
+    let _ = trance_api::IS_SECONDARY_MONITOR_CALLBACK.set(|| false);
+
+    session.init(virtual_cols, virtual_rows);
 
     let present_refresh = presentation_refresh_hz(&layouts, primary);
     let present_fps = target_fps(present_refresh);
@@ -111,16 +84,13 @@ pub fn run_plugin_loop(
     let mut frame_counter = 0u64;
     let mut fps_report = Instant::now();
     let mut achieved_fps = 0.0f32;
-    let mut black_frames: HashMap<(u32, u32), Vec<u8>> = HashMap::new();
 
-    let clear_bounds = display_mode == DisplayMode::Span;
     let result = run_frame_loop(
         presenter,
         stop,
         &mut session,
         &layouts,
         primary,
-        display_mode,
         virtual_cols,
         virtual_rows,
         options,
@@ -131,14 +101,12 @@ pub fn run_plugin_loop(
         &mut frame_counter,
         &mut fps_report,
         &mut achieved_fps,
-        &mut black_frames,
     );
-    if clear_bounds {
-        clear_primary_bounds();
-        clear_caption();
-        unsafe {
-            std::env::remove_var("TRANCE_SPAN_MODE");
-        }
+
+    clear_primary_bounds();
+    clear_caption();
+    unsafe {
+        std::env::remove_var("TRANCE_SPAN_MODE");
     }
     result
 }

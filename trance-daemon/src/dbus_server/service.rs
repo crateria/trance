@@ -218,19 +218,6 @@ impl TranceService {
         Ok(())
     }
 
-    async fn set_display_mode(
-        &self,
-        mode: &str,
-        #[zbus(header)] header: zbus::message::Header<'_>,
-    ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
-        self.controller
-            .apply_command(DaemonCommand::SetDisplayMode(mode.to_string()))
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
-        self.sync_config_status();
-        Ok(())
-    }
-
     async fn set_render_scale(
         &self,
         scale: f64,
@@ -282,7 +269,6 @@ impl TranceService {
             status.active_saver = config.active_saver.clone().unwrap_or_default();
             status.gpu_enabled = config.gpu_enabled;
             status.show_fps_overlay = config.show_fps_overlay;
-            status.display_mode = config.display_mode.clone();
             status.render_scale = config
                 .render_scale
                 .map(|s| s.to_string())

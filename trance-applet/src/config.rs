@@ -19,7 +19,6 @@ pub struct Local76Config {
     pub idle_enabled: bool,
     pub gpu_enabled: bool,
     pub show_fps_overlay: bool,
-    pub display_mode: String,
 }
 
 impl Local76Config {
@@ -47,7 +46,6 @@ impl Local76Config {
             idle_enabled: true,
             gpu_enabled: true,
             show_fps_overlay: false,
-            display_mode: "primary".to_string(),
         };
 
         if let Some(path) = Self::get_config_path() {
@@ -96,11 +94,6 @@ impl Local76Config {
                                     config.show_fps_overlay = b;
                                 }
                             }
-                            "display_mode" => {
-                                if !val.is_empty() {
-                                    config.display_mode = val.to_string();
-                                }
-                            }
                             _ => {}
                         }
                     }
@@ -125,16 +118,14 @@ impl Local76Config {
                  active_saver: \"{}\"\n\
                  idle_enabled: {}\n\
                  gpu_enabled: {}\n\
-                 show_fps_overlay: {}\n\
-                 display_mode: \"{}\"\n",
+                 show_fps_overlay: {}\n",
                 self.accent_color,
                 self.idle_timeout_mins,
                 self.theme_idx,
                 active_str,
                 self.idle_enabled,
                 self.gpu_enabled,
-                self.show_fps_overlay,
-                self.display_mode
+                self.show_fps_overlay
             );
             fs::write(&path, content)?;
         }

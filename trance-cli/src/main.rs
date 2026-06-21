@@ -40,7 +40,6 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "stop" => client.stop_preview().map_err(map_dbus),
         "gpu" => cmd_gpu(&client, &args[1..]),
         "fps-overlay" => cmd_fps_overlay(&client, &args[1..]),
-        "display-mode" => cmd_display_mode(&client, &args[1..]),
         "render-scale" => cmd_render_scale(&client, &args[1..]),
         _ => {
             print_usage();
@@ -57,7 +56,6 @@ fn cmd_status(client: &TranceClient) -> Result<(), String> {
     println!("active_saver:         {}", display_saver(&status.active_saver));
     println!("gpu_enabled:          {}", status.gpu_enabled);
     println!("show_fps_overlay:     {}", status.show_fps_overlay);
-    println!("display_mode:         {}", status.display_mode);
     println!(
         "render_scale:         {}",
         if status.render_scale.is_empty() {
@@ -125,23 +123,6 @@ fn cmd_fps_overlay(client: &TranceClient, args: &[String]) -> Result<(), String>
         Some("off") => client.set_show_fps_overlay(false).map_err(map_dbus),
         Some(value) => Err(format!(
             "unknown fps-overlay subcommand: {value} (use on, off, status)"
-        )),
-    }
-}
-
-fn cmd_display_mode(client: &TranceClient, args: &[String]) -> Result<(), String> {
-    match args.first().map(String::as_str) {
-        None | Some("status") => {
-            let status = client.get_status().map_err(map_dbus)?;
-            println!("display mode: {}", status.display_mode);
-            Ok(())
-        }
-        Some("primary") => client.set_display_mode("primary").map_err(map_dbus),
-        Some("mirror") => client.set_display_mode("mirror").map_err(map_dbus),
-        Some("expand") => client.set_display_mode("expand").map_err(map_dbus),
-        Some("span") => client.set_display_mode("span").map_err(map_dbus),
-        Some(value) => Err(format!(
-            "unknown display-mode: {value} (use primary, mirror, expand, span, status)"
         )),
     }
 }
@@ -215,7 +196,6 @@ fn print_usage() {
            stop                   Stop preview or idle presentation\n\
            gpu on | off | status  Toggle GPU upscaling\n\
            fps-overlay on|off|status  Toggle on-screen FPS overlay\n\
-           display-mode primary|mirror|expand|span|status  Multi-monitor layout\n\
            render-scale <0.25-1.0>|default|status  Simulation grid density (zoom)\n"
     );
 }

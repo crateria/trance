@@ -4,7 +4,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use trance_runner::launcher::{is_allowed_saver, sanitize_saver_name};
-use trance_runner::plugin_meta;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DaemonConfig {
@@ -13,8 +12,6 @@ pub struct DaemonConfig {
     pub idle_timeout_mins: u32,
     pub gpu_enabled: bool,
     pub show_fps_overlay: bool,
-    /// `primary`, `mirror`, or `expand` (see `trance_runner::plugin_meta::parse_display_mode`).
-    pub display_mode: String,
     /// Simulation grid scale override in `(0.25, 1.0]`; `None` uses GPU/CPU defaults.
     pub render_scale: Option<f32>,
 }
@@ -27,7 +24,6 @@ impl Default for DaemonConfig {
             idle_timeout_mins: 5,
             gpu_enabled: true,
             show_fps_overlay: false,
-            display_mode: "primary".to_string(),
             render_scale: None,
         }
     }
@@ -92,11 +88,6 @@ impl DaemonConfig {
                                     config.show_fps_overlay = b;
                                 }
                             }
-                            "display_mode" => {
-                                if plugin_meta::parse_display_mode(val).is_some() {
-                                    config.display_mode = val.to_string();
-                                }
-                            }
                             "render_scale" => {
                                 if val.is_empty() || val.eq_ignore_ascii_case("null") {
                                     config.render_scale = None;
@@ -133,14 +124,12 @@ impl DaemonConfig {
              idle_enabled: {}\n\
              gpu_enabled: {}\n\
              show_fps_overlay: {}\n\
-             display_mode: \"{}\"\n\
              render_scale: {}\n",
             self.idle_timeout_mins,
             active_str,
             self.idle_enabled,
             self.gpu_enabled,
             self.show_fps_overlay,
-            self.display_mode,
             self.render_scale
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "null".to_string())

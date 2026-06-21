@@ -27,7 +27,6 @@ impl DaemonController {
             || status.active_saver != config.active_saver.clone().unwrap_or_default()
             || status.gpu_enabled != config.gpu_enabled
             || status.show_fps_overlay != config.show_fps_overlay
-            || status.display_mode != config.display_mode
             || status.render_scale
                 != config
                     .render_scale
@@ -46,7 +45,6 @@ impl DaemonController {
         status.active_saver = config.active_saver.clone().unwrap_or_default();
         status.gpu_enabled = config.gpu_enabled;
         status.show_fps_overlay = config.show_fps_overlay;
-        status.display_mode = config.display_mode.clone();
         status.render_scale = config
             .render_scale
             .map(|s| s.to_string())

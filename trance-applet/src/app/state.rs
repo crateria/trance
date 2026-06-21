@@ -18,11 +18,6 @@ impl AppModel {
                 };
                 self.gpu_enabled = status.gpu_enabled;
                 self.show_fps_overlay = status.show_fps_overlay;
-                self.display_mode = if status.display_mode.is_empty() {
-                    "primary".to_string()
-                } else {
-                    status.display_mode
-                };
             }
             if let Ok(savers) = crate::daemon_client::list_savers() {
                 self.screensavers = savers;

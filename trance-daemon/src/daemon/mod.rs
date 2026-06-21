@@ -121,7 +121,6 @@ pub fn run_daemon() -> Result<(), Box<dyn std::error::Error>> {
                 | DaemonCommand::SetSaver(_)
                 | DaemonCommand::SetGpuEnabled(_)
                 | DaemonCommand::SetShowFpsOverlay(_)
-                | DaemonCommand::SetDisplayMode(_)
                 | DaemonCommand::SetRenderScale(_) => {
                     let _ = controller.apply_command(command);
                 }

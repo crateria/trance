@@ -23,7 +23,6 @@ pub mod discovery;
 pub mod caption_overlay;
 pub mod fps_overlay;
 pub mod launcher;
-pub mod plugin_meta;
 pub mod plugin_session;
 pub mod toolkit;
 pub mod trance_runner;

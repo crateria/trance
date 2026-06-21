@@ -37,8 +37,6 @@ pub fn start_presentation(
     let options = PresentationOptions {
         gpu_enabled: config.gpu_enabled,
         show_fps_overlay: config.show_fps_overlay,
-        display_mode: trance_runner::plugin_meta::parse_display_mode(&config.display_mode)
-            .unwrap_or(trance_runner::plugin_meta::DisplayMode::PrimaryOnly),
         render_scale: config.render_scale,
         launch_mode,
     };

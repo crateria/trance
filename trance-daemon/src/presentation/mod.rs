@@ -17,7 +17,6 @@ use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 
 use trance_runner::launcher::LaunchMode;
-use trance_runner::plugin_meta::DisplayMode;
 use wayland_present::OverlayPresenter;
 
 pub use plugin_loop::run_plugin_loop;
@@ -26,7 +25,6 @@ pub use plugin_loop::run_plugin_loop;
 pub struct PresentationOptions {
     pub gpu_enabled: bool,
     pub show_fps_overlay: bool,
-    pub display_mode: DisplayMode,
     pub render_scale: Option<f32>,
     pub launch_mode: LaunchMode,
 }
