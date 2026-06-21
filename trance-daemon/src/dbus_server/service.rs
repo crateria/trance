@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::HashMap;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::time::Duration;
 
 use trance_dbus::DaemonStatus;
 use zbus::object_server::SignalEmitter;
@@ -26,14 +24,10 @@ impl TranceService {
         &self,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        require_control_peer(
-            &self.controller.dbus_connection().map_err(zbus::fdo::Error::Failed)?,
-            &header,
-        )
-        .await?;
+        self.authorize_control(&header).await?;
         self.controller
             .apply_command(DaemonCommand::Enable)
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
+            .map_err(zbus::fdo::Error::Failed)?;
         self.sync_config_status();
         Ok(())
     }
@@ -42,18 +36,11 @@ impl TranceService {
         &self,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        require_control_peer(
-            &self.controller.dbus_connection().map_err(zbus::fdo::Error::Failed)?,
-            &header,
-        )
-        .await?;
+        self.authorize_control(&header).await?;
         self.controller
             .apply_command(DaemonCommand::Disable)
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
-        let _ = self
-            .controller
-            .command_tx
-            .send(DaemonCommand::StopPresentation);
+            .map_err(zbus::fdo::Error::Failed)?;
+        let _ = self.controller.command_tx.send(DaemonCommand::StopPresentation);
         self.sync_config_status();
         Ok(())
     }
@@ -63,18 +50,11 @@ impl TranceService {
         minutes: u32,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        require_control_peer(
-            &self.controller.dbus_connection().map_err(zbus::fdo::Error::Failed)?,
-            &header,
-        )
-        .await?;
+        self.authorize_control(&header).await?;
         self.controller
             .apply_command(DaemonCommand::SetTimeout(minutes))
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
-        let _ = self
-            .controller
-            .command_tx
-            .send(DaemonCommand::SetTimeout(minutes));
+            .map_err(zbus::fdo::Error::Failed)?;
+        let _ = self.controller.command_tx.send(DaemonCommand::SetTimeout(minutes));
         self.sync_config_status();
         Ok(())
     }
@@ -84,19 +64,11 @@ impl TranceService {
         name: &str,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        require_control_peer(
-            &self.controller.dbus_connection().map_err(zbus::fdo::Error::Failed)?,
-            &header,
-        )
-        .await?;
-        let saver = if name.is_empty() {
-            None
-        } else {
-            Some(name.to_string())
-        };
+        self.authorize_control(&header).await?;
+        let saver = (!name.is_empty()).then(|| name.to_string());
         self.controller
             .apply_command(DaemonCommand::SetSaver(saver))
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
+            .map_err(zbus::fdo::Error::Failed)?;
         self.sync_config_status();
         Ok(())
     }
@@ -110,11 +82,7 @@ impl TranceService {
         name: &str,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        require_control_peer(
-            &self.controller.dbus_connection().map_err(zbus::fdo::Error::Failed)?,
-            &header,
-        )
-        .await?;
+        self.authorize_control(&header).await?;
         trance_runner::launcher::sanitize_saver_name(name).ok_or_else(|| {
             zbus::fdo::Error::Failed(format!("unknown or invalid screensaver name: {name}"))
         })?;
@@ -124,10 +92,7 @@ impl TranceService {
         )
         .map_err(|error| zbus::fdo::Error::Failed(error.to_string()))?;
 
-        let _ = self
-            .controller
-            .command_tx
-            .send(DaemonCommand::Preview(name.to_string()));
+        let _ = self.controller.command_tx.send(DaemonCommand::Preview(name.to_string()));
         self.controller.mark_dirty();
         Ok(())
     }
@@ -136,15 +101,8 @@ impl TranceService {
         &self,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        require_control_peer(
-            &self.controller.dbus_connection().map_err(zbus::fdo::Error::Failed)?,
-            &header,
-        )
-        .await?;
-        let _ = self
-            .controller
-            .command_tx
-            .send(DaemonCommand::StopPresentation);
+        self.authorize_control(&header).await?;
+        let _ = self.controller.command_tx.send(DaemonCommand::StopPresentation);
         self.controller.mark_dirty();
         Ok(())
     }
@@ -163,10 +121,7 @@ impl TranceService {
             reason.to_string(),
             sender.to_owned(),
         );
-        let _ = self
-            .controller
-            .command_tx
-            .send(DaemonCommand::StopPresentation);
+        let _ = self.controller.command_tx.send(DaemonCommand::StopPresentation);
         self.controller.mark_dirty();
         Ok(cookie)
     }
@@ -179,11 +134,7 @@ impl TranceService {
         let sender = header.sender().ok_or_else(|| {
             zbus::fdo::Error::Failed("un_inhibit request missing D-Bus sender".into())
         })?;
-        if !self
-            .controller
-            .inhibitors
-            .remove_for_client(cookie, sender)
-        {
+        if !self.controller.inhibitors.remove_for_client(cookie, sender) {
             return Err(zbus::fdo::Error::Failed(format!(
                 "unknown inhibit cookie for caller: {cookie}"
             )));
@@ -200,7 +151,7 @@ impl TranceService {
         self.authorize_control(&header).await?;
         self.controller
             .apply_command(DaemonCommand::SetGpuEnabled(enabled))
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
+            .map_err(zbus::fdo::Error::Failed)?;
         self.sync_config_status();
         Ok(())
     }
@@ -213,7 +164,7 @@ impl TranceService {
         self.authorize_control(&header).await?;
         self.controller
             .apply_command(DaemonCommand::SetShowFpsOverlay(enabled))
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
+            .map_err(zbus::fdo::Error::Failed)?;
         self.sync_config_status();
         Ok(())
     }
@@ -226,13 +177,13 @@ impl TranceService {
         self.authorize_control(&header).await?;
         self.controller
             .apply_command(DaemonCommand::SetRenderScale(Some(scale as f32)))
-            .map_err(|error| zbus::fdo::Error::Failed(error))?;
+            .map_err(zbus::fdo::Error::Failed)?;
         self.sync_config_status();
         Ok(())
     }
 
     #[zbus(signal)]
-    async fn status_changed(
+    pub(super) async fn status_changed(
         signal_emitter: &SignalEmitter<'_>,
         status: HashMap<String, OwnedValue>,
     ) -> zbus::Result<()>;
@@ -276,23 +227,5 @@ impl TranceService {
         }
         self.controller.mark_dirty();
         self.controller.publish_status_if_dirty();
-    }
-}
-
-pub async fn emit_status_changes(
-    connection: zbus::Connection,
-    receiver: std::sync::mpsc::Receiver<DaemonStatus>,
-    shutdown: Arc<std::sync::atomic::AtomicBool>,
-) {
-    while !shutdown.load(Ordering::Relaxed) {
-        match receiver.recv_timeout(Duration::from_millis(200)) {
-            Ok(status) => {
-                if let Ok(emitter) = SignalEmitter::new(&connection, trance_dbus::OBJECT_PATH) {
-                    let _ = TranceService::status_changed(&emitter, status.to_map()).await;
-                }
-            }
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
-            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
-        }
     }
 }

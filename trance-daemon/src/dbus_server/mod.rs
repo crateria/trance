@@ -65,7 +65,7 @@ async fn serve(controller: Arc<DaemonController>) -> Result<(), String> {
         controller.clone(),
     ));
 
-    tokio::spawn(service::emit_status_changes(
+    tokio::spawn(emit_status_changes(
         connection,
         status_emit_rx,
         controller.shutdown.clone(),
@@ -76,4 +76,22 @@ async fn serve(controller: Arc<DaemonController>) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub async fn emit_status_changes(
+    connection: zbus::Connection,
+    receiver: std::sync::mpsc::Receiver<trance_dbus::DaemonStatus>,
+    shutdown: Arc<std::sync::atomic::AtomicBool>,
+) {
+    while !shutdown.load(Ordering::Relaxed) {
+        match receiver.recv_timeout(Duration::from_millis(200)) {
+            Ok(status) => {
+                if let Ok(emitter) = zbus::object_server::SignalEmitter::new(&connection, OBJECT_PATH) {
+                    let _ = TranceService::status_changed(&emitter, status.to_map()).await;
+                }
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+        }
+    }
 }

@@ -56,10 +56,6 @@ impl PluginSession {
         Self::load_path_with_options(&path, gpu_enabled, render_scale)
     }
 
-    pub fn load_path(path: &Path) -> Result<Self, String> {
-        Self::load_path_with_options(path, None, None)
-    }
-
     pub fn load_path_with_options(
         path: &Path,
         gpu_enabled: Option<bool>,
@@ -118,17 +114,12 @@ impl PluginSession {
         }
     }
 
-    pub fn render_scale(&self) -> f32 {
-        self.render_scale
-    }
+    pub fn render_scale(&self) -> f32 { self.render_scale }
 
-    pub fn using_gpu_upscale(&self) -> bool {
-        self.upscaler.using_gpu()
-    }
+    pub fn using_gpu_upscale(&self) -> bool { self.upscaler.using_gpu() }
 
     pub fn grid_for_pixels(&self, width: u32, height: u32) -> (usize, usize) {
-        self.renderer
-            .grid_for_pixels_scaled(width, height, self.render_scale)
+        self.renderer.grid_for_pixels_scaled(width, height, self.render_scale)
     }
 
     pub fn init(&mut self, cols: usize, rows: usize) {
