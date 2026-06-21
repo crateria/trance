@@ -20,7 +20,7 @@ pub enum Message {
     DecreaseTimeout,
     IncreaseTimeout,
     OpenPowerSettings,
-    DisplayModeSelected(String),
+    MiddleClick,
 }
 
 // Popup lifecycle messages are handled before settings mutations in update().

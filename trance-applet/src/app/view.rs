@@ -7,10 +7,12 @@ use super::{AppModel, Message};
 
 impl AppModel {
     pub(crate) fn view_panel(&self) -> cosmic::Element<'_, Message> {
-        self.core
+        let btn = self.core
             .applet
             .icon_button("display-symbolic")
-            .on_press(Message::TogglePopup)
+            .on_press(Message::TogglePopup);
+        cosmic::iced::widget::mouse_area(btn)
+            .on_middle_press(Message::MiddleClick)
             .into()
     }
 
@@ -86,6 +88,7 @@ impl AppModel {
                 widget::toggler(self.local_config.idle_enabled)
                     .on_toggle(Message::ToggleIdleEnabled),
             ))
+            .add(widget::settings::item("Idle Timeout", timeout_adjuster))
             .add(widget::settings::item(
                 "GPU Upscaling",
                 widget::toggler(self.gpu_enabled).on_toggle(Message::ToggleGpuEnabled),
@@ -94,33 +97,7 @@ impl AppModel {
                 "FPS Overlay",
                 widget::toggler(self.show_fps_overlay).on_toggle(Message::ToggleFpsOverlay),
             ))
-            .add(widget::settings::item(
-                "Display Mode",
-                cosmic::iced::widget::Row::new()
-                    .spacing(6)
-                    .push(
-                        widget::button::standard("Primary")
-                            .on_press(Message::DisplayModeSelected("primary".into())),
-                    )
-                    .push(
-                        widget::button::standard("Mirror")
-                            .on_press(Message::DisplayModeSelected("mirror".into())),
-                    )
-                    .push(
-                        widget::button::standard("Expand")
-                            .on_press(Message::DisplayModeSelected("expand".into())),
-                    )
-                    .push(
-                        widget::button::standard("Span")
-                            .on_press(Message::DisplayModeSelected("span".into())),
-                    ),
-            ))
-            .add(widget::settings::item(
-                "Active Layout",
-                widget::text(self.display_mode.clone()),
-            ))
-            .add(widget::settings::item("Idle Timeout", timeout_adjuster))
-            .add(grid)
+            .add(cosmic::iced::widget::container(grid).width(cosmic::iced::Length::Fill))
             .add(actions);
 
         self.core.applet.popup_container(content_list).into()

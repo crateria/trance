@@ -80,15 +80,7 @@ impl AppModel {
                     let _ = self.local_config.save();
                 }
             }
-            Message::DisplayModeSelected(mode) => {
-                self.display_mode = mode.clone();
-                self.local_config.display_mode = mode.clone();
-                if crate::daemon_client::is_running() {
-                    let _ = crate::daemon_client::set_display_mode(&mode);
-                } else {
-                    let _ = self.local_config.save();
-                }
-            }
+
             Message::ActiveSaverSelected(saver) => {
                 if saver == "Random" {
                     self.local_config.active_saver = None;
@@ -149,6 +141,26 @@ impl AppModel {
                         .max_height(1080.0);
                     get_popup(popup_settings)
                 };
+            }
+            Message::MiddleClick => {
+                let saver = self.local_config.active_saver.clone().unwrap_or_else(|| {
+                    if self.screensavers.is_empty() {
+                        "beams".to_string()
+                    } else {
+                        let idx = std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs() as usize % self.screensavers.len();
+                        self.screensavers[idx].clone()
+                    }
+                });
+                if crate::daemon_client::is_running() {
+                    let _ = crate::daemon_client::start_preview(&saver);
+                } else {
+                    let _ = std::process::Command::new("trance-runner")
+                        .args(["preview", &saver])
+                        .spawn();
+                }
             }
             Message::PopupClosed(id) => {
                 if self.popup.as_ref() == Some(&id) {

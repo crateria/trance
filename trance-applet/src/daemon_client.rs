@@ -48,16 +48,18 @@ pub fn set_show_fps_overlay(enabled: bool) -> Result<(), String> {
         .map_err(|error| error.to_string())
 }
 
-pub fn set_display_mode(mode: &str) -> Result<(), String> {
-    TranceClient::connect()
-        .map_err(|error| error.to_string())?
-        .set_display_mode(mode)
-        .map_err(|error| error.to_string())
-}
+
 
 pub fn list_savers() -> Result<Vec<String>, String> {
     TranceClient::connect()
         .map_err(|error| error.to_string())?
         .list_savers()
+        .map_err(|error| error.to_string())
+}
+
+pub fn start_preview(name: &str) -> Result<(), String> {
+    TranceClient::connect()
+        .map_err(|error| error.to_string())?
+        .preview(name)
         .map_err(|error| error.to_string())
 }
