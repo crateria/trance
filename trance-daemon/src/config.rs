@@ -31,10 +31,8 @@ impl Default for DaemonConfig {
 
 impl DaemonConfig {
     fn get_config_path() -> Option<PathBuf> {
-        if let Ok(xdg_config) = std::env::var("XDG_CONFIG_HOME") {
-            if !xdg_config.is_empty() {
-                return Some(PathBuf::from(xdg_config).join("local76").join("theme.yaml"));
-            }
+        if let Some(xdg_config) = std::env::var("XDG_CONFIG_HOME").ok().filter(|s| !s.is_empty()) {
+            return Some(PathBuf::from(xdg_config).join("local76").join("theme.yaml"));
         }
         let home = std::env::var("HOME").ok()?;
         Some(
@@ -47,58 +45,52 @@ impl DaemonConfig {
 
     pub fn load() -> Self {
         let mut config = Self::default();
-        if let Some(path) = Self::get_config_path() {
-            if let Ok(content) = fs::read_to_string(&path) {
-                for line in content.lines() {
-                    let line = line.trim();
-                    if line.is_empty() || line.starts_with('#') {
-                        continue;
-                    }
-                    if let Some(idx) = line.find(':') {
-                        let key = line[..idx].trim();
-                        let val = line[idx + 1..].trim().trim_matches('"').trim_matches('\'');
-                        match key {
-                            "idle_timeout_mins" => {
-                                if let Ok(n) = val.parse::<u32>() {
-                                    if (1..=240).contains(&n) {
-                                        config.idle_timeout_mins = n;
-                                    }
-                                }
+        if let Some(Ok(content)) = Self::get_config_path().map(fs::read_to_string) {
+            for line in content.lines() {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') {
+                    continue;
+                }
+                if let Some(idx) = line.find(':') {
+                    let key = line[..idx].trim();
+                    let val = line[idx + 1..].trim().trim_matches('"').trim_matches('\'');
+                    match key {
+                        "idle_timeout_mins" => {
+                            if let Some(n) = val.parse::<u32>().ok().filter(|&n| (1..=240).contains(&n)) {
+                                config.idle_timeout_mins = n;
                             }
-                            "active_saver" => {
-                                if val.is_empty() || val == "none" {
-                                    config.active_saver = None;
-                                } else if is_allowed_saver(val) {
-                                    config.active_saver =
-                                        sanitize_saver_name(val).map(|s| s.to_string());
-                                }
-                            }
-                            "idle_enabled" => {
-                                if let Ok(b) = val.parse::<bool>() {
-                                    config.idle_enabled = b;
-                                }
-                            }
-                            "gpu_enabled" => {
-                                if let Ok(b) = val.parse::<bool>() {
-                                    config.gpu_enabled = b;
-                                }
-                            }
-                            "show_fps_overlay" => {
-                                if let Ok(b) = val.parse::<bool>() {
-                                    config.show_fps_overlay = b;
-                                }
-                            }
-                            "render_scale" => {
-                                if val.is_empty() || val.eq_ignore_ascii_case("null") {
-                                    config.render_scale = None;
-                                } else if let Ok(scale) = val.parse::<f32>() {
-                                    if scale.is_finite() {
-                                        config.render_scale = Some(scale.clamp(0.25, 1.0));
-                                    }
-                                }
-                            }
-                            _ => {}
                         }
+                        "active_saver" => {
+                            if val.is_empty() || val == "none" {
+                                config.active_saver = None;
+                            } else if is_allowed_saver(val) {
+                                config.active_saver =
+                                    sanitize_saver_name(val).map(|s| s.to_string());
+                            }
+                        }
+                        "idle_enabled" => {
+                            if let Ok(b) = val.parse::<bool>() {
+                                config.idle_enabled = b;
+                            }
+                        }
+                        "gpu_enabled" => {
+                            if let Ok(b) = val.parse::<bool>() {
+                                config.gpu_enabled = b;
+                            }
+                        }
+                        "show_fps_overlay" => {
+                            if let Ok(b) = val.parse::<bool>() {
+                                config.show_fps_overlay = b;
+                            }
+                        }
+                        "render_scale" => {
+                            if val.is_empty() || val.eq_ignore_ascii_case("null") {
+                                config.render_scale = None;
+                            } else if let Some(scale) = val.parse::<f32>().ok().filter(|s| s.is_finite()) {
+                                config.render_scale = Some(scale.clamp(0.25, 1.0));
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }

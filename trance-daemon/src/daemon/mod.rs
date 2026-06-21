@@ -31,15 +31,14 @@ pub fn run_daemon() -> Result<(), Box<dyn std::error::Error>> {
         std::env::temp_dir().join("trance-daemon.pid")
     };
 
-    if pid_path.exists() {
-        if let Ok(pid_str) = fs::read_to_string(&pid_path) {
-            if let Ok(pid) = pid_str.trim().parse::<i32>() {
-                unsafe {
-                    if libc::kill(pid, 0) == 0 && pid != std::process::id() as i32 {
-                        eprintln!("trance-daemon is already running (pid {pid}). Exiting.");
-                        return Ok(());
-                    }
-                }
+    if let Some(pid) = fs::read_to_string(&pid_path)
+        .ok()
+        .and_then(|s| s.trim().parse::<i32>().ok())
+    {
+        unsafe {
+            if libc::kill(pid, 0) == 0 && pid != std::process::id() as i32 {
+                eprintln!("trance-daemon is already running (pid {pid}). Exiting.");
+                return Ok(());
             }
         }
     }

@@ -69,10 +69,8 @@ pub fn current_time_micros() -> u64 {
 }
 
 pub fn pick_saver_name(config: &DaemonConfig, seed_micros: u64) -> String {
-    if let Some(ref active) = config.active_saver {
-        if is_allowed_saver(active) {
-            return active.clone();
-        }
+    if let Some(active) = config.active_saver.as_deref().filter(|&s| is_allowed_saver(s)) {
+        return active.to_string();
     }
 
     let mut seed = seed_micros;
