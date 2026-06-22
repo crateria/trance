@@ -19,6 +19,7 @@ pub struct Inhibitor {
 pub struct InhibitorState {
     inhibitors: Mutex<Vec<Inhibitor>>,
     last_cookie: AtomicU32,
+    logind_cache: Mutex<(bool, std::time::Instant)>,
 }
 
 impl InhibitorState {
@@ -26,11 +27,26 @@ impl InhibitorState {
         Self {
             inhibitors: Mutex::new(Vec::new()),
             last_cookie: AtomicU32::new(0),
+            logind_cache: Mutex::new((
+                false,
+                std::time::Instant::now()
+                    .checked_sub(std::time::Duration::from_secs(5))
+                    .unwrap_or_else(std::time::Instant::now),
+            )),
         }
     }
 
     pub fn is_inhibited(&self) -> bool {
-        !self.inhibitors.lock().unwrap().is_empty()
+        if !self.inhibitors.lock().unwrap().is_empty() {
+            return true;
+        }
+
+        let mut cache = self.logind_cache.lock().unwrap();
+        if cache.1.elapsed() >= std::time::Duration::from_secs(2) {
+            cache.0 = check_logind_inhibited();
+            cache.1 = std::time::Instant::now();
+        }
+        cache.0
     }
 
     pub fn add(
@@ -68,4 +84,37 @@ impl InhibitorState {
         let mut inhibitors = self.inhibitors.lock().unwrap();
         inhibitors.retain(|entry| entry.client != *client);
     }
+}
+
+#[cfg(target_os = "linux")]
+type LogindInhibitorInfo = (String, String, String, String, u32, u32);
+
+#[cfg(target_os = "linux")]
+fn check_logind_inhibited() -> bool {
+    let Ok(conn) = zbus::blocking::Connection::system() else {
+        return false;
+    };
+    let Ok(reply) = conn.call_method(
+        Some("org.freedesktop.login1"),
+        "/org/freedesktop/login1",
+        Some("org.freedesktop.login1.Manager"),
+        "ListInhibitors",
+        &(),
+    ) else {
+        return false;
+    };
+    let Ok(inhibitors): Result<Vec<LogindInhibitorInfo>, _> = reply.body().deserialize() else {
+        return false;
+    };
+    for (what, _, _, _, _, _) in inhibitors {
+        if what.split(':').any(|w| w == "idle") {
+            return true;
+        }
+    }
+    false
+}
+
+#[cfg(not(target_os = "linux"))]
+fn check_logind_inhibited() -> bool {
+    false
 }
