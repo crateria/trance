@@ -19,22 +19,27 @@ Trance is a modular Wayland-native screensaver system for modern Linux desktops,
 
 ## Installation
 
-Register the repository first (see instructions in the [packages](https://github.com/UberMetroid/packages) repository). Then install via your system package manager:
-
 ### Debian / Ubuntu / Pop!_OS (APT)
 
 ```bash
-sudo apt update
-sudo apt install trance
+# 1. Download the repository configuration and keyring
+sudo curl -fsSL https://ubermetroid.github.io/packages/apt/ubermetroid-keyring.gpg -o /etc/apt/trusted.gpg.d/ubermetroid.gpg
+sudo curl -fsSL https://ubermetroid.github.io/packages/apt/ubermetroid.list -o /etc/apt/sources.list.d/ubermetroid.list
+
+# 2. Update and install
+sudo apt update && sudo apt install trance
 ```
 
-*Note: A standard install pulls in recommended plugins (`trance-plugins-all`) and the COSMIC applet (`trance-applet`). For core + stock screensaver only, run `sudo apt install --no-install-recommends trance`.*
+*Note: A standard APT install pulls in recommended plugins (`trance-plugins-all`) and the COSMIC applet (`trance-applet`). To install only the core package and stock screensaver, run `sudo apt install --no-install-recommends trance`.*
 
 ### Fedora (DNF)
 
 ```bash
-sudo dnf check-update
-sudo dnf install trance
+# 1. Download the repository configuration
+sudo curl -fsSL https://ubermetroid.github.io/packages/rpm/ubermetroid.repo -o /etc/yum.repos.d/ubermetroid.repo
+
+# 2. Update and install
+sudo dnf check-update && sudo dnf install trance
 ```
 
 ---
