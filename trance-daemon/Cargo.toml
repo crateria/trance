@@ -53,7 +53,6 @@ assets = [
 
 [package.metadata.generate-rpm]
 name = "trance"
-version = "0.3.4"
 release = "1"
 arch = "x86_64"
 summary = "Background idle daemon and core package for trance screensavers"

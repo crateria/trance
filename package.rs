@@ -53,6 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_cmd(Command::new("cargo").args(["build", "--release"]))?;
 
     let apt_pool = Path::new("../packages/apt/pool/main");
+    let rpm_pool = Path::new("../packages/rpm/pool");
 
     for crate_name in CRATES {
         println!("------------------------------------------");
@@ -96,17 +97,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             println!("Warning: Debian package not found for {} (searched for: {}).", crate_name, pkg_name);
         }
+
+        println!("Building RPM package...");
+        run_cmd(Command::new("cargo").args(["generate-rpm", "-p", crate_name]))?;
+
+        // Find built .rpm file
+        let rpm_dir = Path::new("target/generate-rpm");
+        let rpm_prefix = format!("{}-", pkg_name);
+        let mut rpm_file_path = None;
+
+        if let Ok(entries) = fs::read_dir(rpm_dir) {
+            for entry in entries {
+                let entry = entry?;
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(filename) = path.file_name().and_then(|s| s.to_str()) {
+                        if filename.starts_with(&rpm_prefix) && filename.ends_with(".rpm") {
+                            rpm_file_path = Some(path);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(src_path) = rpm_file_path {
+            println!("Built RPM: {:?}", src_path.file_name().unwrap());
+            let dest_path = rpm_pool.join(src_path.file_name().unwrap());
+            fs::copy(&src_path, &dest_path)?;
+            println!("Copied to rpm repository packages/rpm/pool/");
+        } else {
+            println!("Warning: RPM package not found for {} (searched for: {}).", crate_name, pkg_name);
+        }
     }
 
     println!("==========================================");
     println!("Updating packages index...");
     println!("==========================================");
     
-    // Compile and execute apt/update.rs on the fly using stable rustc
-    println!("Compiling update.rs...");
-    run_cmd(Command::new("rustc").args(["../packages/apt/update.rs", "-o", "../packages/apt/update_runner"]))?;
-    run_cmd(Command::new("./update_runner").current_dir("../packages/apt"))?;
-    let _ = fs::remove_file("../packages/apt/update_runner");
+    // Execute the unified update script at the packages root
+    run_cmd(Command::new("./update.sh").current_dir("../packages"))?;
 
     println!("==========================================");
     println!("Trance build and package sync complete!");
