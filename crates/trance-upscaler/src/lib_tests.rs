@@ -98,7 +98,7 @@ fn simulation_tick_hz_default_in_range() {
         std::env::remove_var("TRANCE_TICK_HZ");
     }
     let hz = simulation_tick_hz();
-    assert!(hz >= 15.0 && hz <= 240.0);
+    assert!((15.0..=240.0).contains(&hz));
     if let Some(v) = prior {
         unsafe {
             std::env::set_var("TRANCE_TICK_HZ", v);

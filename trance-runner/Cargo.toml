@@ -19,3 +19,7 @@ trance-upscaler = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+
+[[bin]]
+name = "check_limits"
+path = "check_limits.rs"

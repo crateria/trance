@@ -41,6 +41,7 @@ impl Screensaver for HueShifter {
 }
 
 fn main() {
+    let _saver = HueShifter { hue: 0.0 };
     let mut rng = LcgRng::new_random();
     let _ = rng.next_u64();
     let _ = rgb_to_hsl(255, 0, 0);

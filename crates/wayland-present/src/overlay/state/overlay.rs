@@ -70,6 +70,7 @@ impl SessionState {
         );
     }
 
+    #[allow(clippy::cast_possible_wrap)]
     pub fn configure_overlay(&mut self, output_id: u32, serial: u32, width: u32, height: u32) {
         let Some(overlay) = self.overlays.get_mut(&output_id) else {
             return;
@@ -141,6 +142,7 @@ impl SessionState {
         }
     }
 
+    #[allow(clippy::cast_possible_wrap, clippy::needless_pass_by_value)]
     pub fn update_frame(&mut self, output_id: u32, width: u32, height: u32, pixels: Vec<u8>) {
         if !self.screensaver_mode {
             return;
@@ -214,6 +216,7 @@ impl SessionState {
         (native_w.max(configured_w), native_h.max(configured_h))
     }
 
+    #[allow(clippy::cast_possible_wrap)]
     pub(crate) fn apply_tiling_margins(
         layer_surface: &zwlr_layer_surface_v1::ZwlrLayerSurfaceV1,
         surface: &wl_surface::WlSurface,

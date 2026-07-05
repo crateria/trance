@@ -78,6 +78,7 @@ mod tests {
 
     #[test]
     fn monitor_starts_unavailable_without_wayland() {
+        let _lock = crate::get_test_mutex().lock().unwrap();
         let backup = std::env::var("WAYLAND_DISPLAY").ok();
         unsafe {
             std::env::remove_var("WAYLAND_DISPLAY");
@@ -93,6 +94,7 @@ mod tests {
 
     #[test]
     fn monitor_is_available_matches_env() {
+        let _lock = crate::get_test_mutex().lock().unwrap();
         let backup = std::env::var("WAYLAND_DISPLAY").ok();
         unsafe {
             std::env::set_var("WAYLAND_DISPLAY", "wayland-mock-monitor-0");

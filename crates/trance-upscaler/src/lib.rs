@@ -91,8 +91,7 @@ pub fn simulation_tick_hz() -> f32 {
     std::env::var("TRANCE_TICK_HZ")
         .ok()
         .and_then(|value| value.parse::<f32>().ok())
-        .map(|hz| hz.clamp(15.0, 240.0))
-        .unwrap_or(60.0)
+        .map_or(60.0, |hz| hz.clamp(15.0, 240.0))
 }
 
 pub fn target_fps(detected_refresh_hz: u32) -> f32 {
@@ -163,6 +162,7 @@ impl FrameUpscaler {
         None
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn upscale_letterbox_into(
         &mut self,
         src: &[u8],
@@ -187,6 +187,7 @@ impl FrameUpscaler {
     }
 
     /// Stretch source to fill the destination (fullscreen presentation path).
+    #[allow(clippy::too_many_arguments)]
     pub fn upscale_stretch_into(
         &mut self,
         src: &[u8],

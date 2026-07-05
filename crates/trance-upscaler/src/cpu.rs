@@ -32,6 +32,7 @@ impl StretchCache {
 
 /// Fast integer nearest-neighbor stretch into `dst` (reuses `cache` x-map).
 #[tracing::instrument(skip_all, fields(src_w, src_h, dst_w, dst_h))]
+#[allow(clippy::too_many_arguments)]
 pub fn upscale_stretch_into(
     dst: &mut [u8],
     src: &[u8],
@@ -115,6 +116,7 @@ pub fn upscale_stretch(src: &[u8], src_w: u32, src_h: u32, dst_w: u32, dst_h: u3
 }
 
 #[tracing::instrument(skip_all, fields(src_w, src_h, dst_w, dst_h, ?filter))]
+#[allow(clippy::too_many_arguments)]
 pub fn upscale_letterbox_into(
     dst: &mut [u8],
     src: &[u8],

@@ -7,7 +7,6 @@ use trance_dbus::DaemonStatus;
 use zbus::object_server::SignalEmitter;
 use zbus::zvariant::OwnedValue;
 
-use super::auth::require_control_peer;
 use crate::controller::{DaemonCommand, DaemonController};
 
 pub struct TranceService {
@@ -234,46 +233,14 @@ impl TranceService {
 
 impl TranceService {
     async fn authorize_control(&self, header: &zbus::message::Header<'_>) -> zbus::fdo::Result<()> {
-        require_control_peer(
-            &self
-                .controller
-                .dbus_connection()
-                .map_err(zbus::fdo::Error::Failed)?,
-            header,
-        )
-        .await
+        super::service_helpers::authorize_control(&self.controller, header).await
     }
 
-    #[tracing::instrument(skip(self), level = "trace")]
     fn live_status(&self) -> DaemonStatus {
-        let mut status = self.controller.status.lock().unwrap().clone();
-        status.session_locked = self
-            .controller
-            .session_locked
-            .load(std::sync::atomic::Ordering::Relaxed);
-        status.inhibited = self.controller.inhibitors.is_inhibited();
-        status
+        super::service_helpers::live_status(&self.controller)
     }
 
-    #[tracing::instrument(skip(self))]
     fn sync_config_status(&self) {
-        let config = self.controller.config.lock().unwrap().clone();
-        {
-            let mut status = self.controller.status.lock().unwrap();
-            status.idle_enabled = config.idle_enabled;
-            status.idle_timeout_mins = config.idle_timeout_mins;
-            status.active_saver = config.active_saver.clone().unwrap_or_default();
-            #[allow(deprecated)]
-            {
-                status.gpu_enabled = false;
-            }
-            status.show_fps_overlay = config.show_fps_overlay;
-            status.render_scale = config
-                .render_scale
-                .map(|s| s.to_string())
-                .unwrap_or_default();
-        }
-        self.controller.mark_dirty();
-        self.controller.publish_status_if_dirty();
+        super::service_helpers::sync_config_status(&self.controller);
     }
 }

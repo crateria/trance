@@ -77,10 +77,12 @@ mod tests {
 
     #[test]
     fn status_to_map_preserves_string_fields() {
-        let mut status = DaemonStatus::default();
-        status.active_saver = "cosmos".to_string();
-        status.current_saver = "beams".to_string();
-        status.render_scale = "0.5".to_string();
+        let status = DaemonStatus {
+            active_saver: "cosmos".to_string(),
+            current_saver: "beams".to_string(),
+            render_scale: "0.5".to_string(),
+            ..DaemonStatus::default()
+        };
         let map = status.to_map();
         assert_eq!(map.len(), 13);
         assert!(map.contains_key("active_saver"));

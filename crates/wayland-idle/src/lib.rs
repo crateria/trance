@@ -26,11 +26,20 @@ pub use monitor::IdleMonitor;
 // No X11 ScreenSaver extension fallback is attempted in this crate.
 
 #[cfg(test)]
+pub(crate) static TEST_MUTEX: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+
+#[cfg(test)]
+pub(crate) fn get_test_mutex() -> &'static std::sync::Mutex<()> {
+    TEST_MUTEX.get_or_init(|| std::sync::Mutex::new(()))
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_availability_and_fallback() {
+        let _lock = crate::get_test_mutex().lock().unwrap();
         let backup = std::env::var("WAYLAND_DISPLAY").ok();
 
         unsafe {

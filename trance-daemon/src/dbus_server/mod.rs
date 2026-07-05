@@ -3,6 +3,7 @@
 mod auth;
 mod screensaver;
 mod service;
+mod service_helpers;
 mod watchers;
 
 use std::sync::Arc;

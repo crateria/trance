@@ -42,7 +42,7 @@ impl SessionState {
         // The previous 800ms window was slightly too short: on a slow
         // monitor refresh or under load, the user could perceive the
         // overlay for less than a frame before it vanished.
-        self.dismiss_grace_until = Some(Instant::now() + Duration::from_millis(1000));
+        self.dismiss_grace_until = Some(Instant::now() + Duration::from_secs(1));
         self.output_registry.clear();
         if self.pointer_serial != 0 {
             self.hide_pointer(self.pointer_serial);

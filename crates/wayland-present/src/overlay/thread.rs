@@ -27,6 +27,7 @@ pub enum PresenterCommand {
     Hide,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_event_thread(
     ready_tx: Sender<Result<(), &'static str>>,
     command_rx: Receiver<PresenterCommand>,
@@ -52,6 +53,7 @@ pub fn spawn_event_thread(
 }
 
 #[tracing::instrument(skip_all)]
+#[allow(clippy::needless_pass_by_value)]
 fn run_event_loop(
     ready_tx: Sender<Result<(), &'static str>>,
     command_rx: Receiver<PresenterCommand>,

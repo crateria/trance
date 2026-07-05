@@ -60,6 +60,7 @@ pub(super) fn teardown_terminal(_ctx: TerminalContext) {
 
 /// Returns `false` if the loop should exit (shutdown, late keypress, or mouse
 /// activity). Also reapplies resize changes when the terminal dimensions shift.
+#[allow(clippy::too_many_arguments)]
 fn check_input_and_resize(
     saver: &mut dyn Screensaver,
     cols: &mut usize,

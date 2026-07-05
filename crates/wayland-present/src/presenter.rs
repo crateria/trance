@@ -70,7 +70,7 @@ impl OverlayPresenter {
         self.is_alive.load(Ordering::SeqCst)
     }
 
-    /// Returns `true` if the compositor supports wp_viewporter hardware scaling.
+    /// Returns `true` if the compositor supports `wp_viewporter` hardware scaling.
     pub fn supports_scaling(&self) -> bool {
         self.supports_scaling.load(Ordering::SeqCst)
     }

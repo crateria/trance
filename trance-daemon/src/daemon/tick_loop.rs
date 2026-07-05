@@ -5,8 +5,6 @@
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
-use anyhow::anyhow;
-
 use super::idle_logic::update_presentation_state;
 use super::presentation::ActivePresentation;
 use super::runtime::check_runtime_alive;
