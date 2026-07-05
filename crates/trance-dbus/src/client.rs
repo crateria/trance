@@ -170,15 +170,15 @@ pub fn daemon_available() -> bool {
         Err(_) => return false,
     };
     
-    if let Ok(name) = zbus::names::BusName::try_from(SERVICE_NAME) {
-        if dbus.name_has_owner(name).unwrap_or(false) {
-            return true;
-        }
+    if let Ok(name) = zbus::names::BusName::try_from(SERVICE_NAME)
+        && dbus.name_has_owner(name).unwrap_or(false)
+    {
+        return true;
     }
-    if let Ok(name) = zbus::names::BusName::try_from(crate::LEGACY_SERVICE_NAME) {
-        if dbus.name_has_owner(name).unwrap_or(false) {
-            return true;
-        }
+    if let Ok(name) = zbus::names::BusName::try_from(crate::LEGACY_SERVICE_NAME)
+        && dbus.name_has_owner(name).unwrap_or(false)
+    {
+        return true;
     }
     false
 }

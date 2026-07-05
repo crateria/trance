@@ -94,16 +94,16 @@ fn get_config_path() -> Option<PathBuf> {
     };
 
     let new_path = get_path_for_org("ubermetroid");
-    if let Some(ref path) = new_path {
-        if path.is_file() {
-            return new_path;
-        }
+    if let Some(ref path) = new_path
+        && path.is_file()
+    {
+        return new_path;
     }
     let legacy_path = get_path_for_org("local76");
-    if let Some(ref path) = legacy_path {
-        if path.is_file() {
-            return legacy_path;
-        }
+    if let Some(ref path) = legacy_path
+        && path.is_file()
+    {
+        return legacy_path;
     }
     new_path
 }
