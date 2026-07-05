@@ -1,7 +1,7 @@
 # Rust formatter configuration for the UberMetroid companion apps.
 # Kept intentionally minimal; overridable per-crate if needed.
 
-edition = "2021"
+edition = "2024"
 max_width = 100
 hard_tabs = false
 tab_spaces = 4
