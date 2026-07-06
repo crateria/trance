@@ -41,6 +41,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Building All Trance Packages via Rust...");
     println!("==========================================");
 
+    // Clean stale packaging directories to avoid copying old versions
+    let _ = fs::remove_dir_all("target/debian");
+    let _ = fs::remove_dir_all("target/generate-rpm");
+
     // Ensure path to cargo bin
     let home = std::env::var("HOME")?;
     let path = std::env::var("PATH")?;
