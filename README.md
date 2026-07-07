@@ -43,6 +43,41 @@ sudo dnf check-update && sudo dnf install trance
 
 ---
 
+## 🎛️ Configuration Guides
+
+Trance can be configured dynamically through two visual configuration clients: the COSMIC Panel Applet and the Terminal User Interface (TUI).
+
+### 1. COSMIC Panel Applet (`trance-applet`)
+If you are running the COSMIC Desktop environment:
+*   **Activation**: Right-click on your COSMIC panel, select **Add Applet**, search for **Trance**, and add it to your panel.
+*   **Features**:
+    *   Toggle the background daemon status.
+    *   Toggle idle activation on/off.
+    *   Set the idle timeout using standard stepper controls.
+    *   Adjust the **Render Scale** slider to optimize performance.
+    *   Browse and select screensavers from a compact, scrollable list.
+    *   Instantly test a screensaver with the **Preview Now** button.
+    *   Displays a `(Battery Saver Active)` badge when your laptop is unplugged (locking frame-rates to 30 FPS/Hz).
+
+### 2. Terminal User Interface (`trance-tui`)
+If you are running a non-COSMIC desktop (e.g., GNOME, KDE, or Hyprland) or prefer terminal-based configuration:
+*   **Run**:
+    ```bash
+    trance-tui
+    ```
+*   **Interface**:
+    *   **Left Pane (System Configurations)**: Manage the background daemon, idle timeout minutes, FPS overlay, and render scale slider.
+    *   **Right Pane (Installed Screensavers)**: Select the active screensaver and press `p` to test it immediately.
+*   **Keybindings**:
+    *   `Tab`: Toggle focus between settings and screensavers list.
+    *   `Up` / `Down`: Navigate menu/list selections.
+    *   `Left` / `Right`: Decrease or increase timeout and render scale.
+    *   `Space` / `Enter`: Toggle configuration values, trigger actions, or set active screensaver.
+    *   `p`: Run a full-screen screensaver preview.
+    *   `q` / `Esc`: Exit the TUI.
+
+---
+
 ## ⚙️ Configuration Options & API
 
 ### CLI Controller Reference
