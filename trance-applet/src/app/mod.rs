@@ -32,7 +32,8 @@ impl Default for AppModel {
             local_config: crate::config::ThemeConfig::default(),
             screensavers: Vec::new(),
             daemon_running: false,
-            gpu_enabled: true,
+            // GPU upscaler removed in 2026; always false (field kept for UI/status).
+            gpu_enabled: false,
             show_fps_overlay: false,
         }
     }

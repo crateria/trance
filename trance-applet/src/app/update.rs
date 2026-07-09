@@ -18,36 +18,22 @@ impl AppModel {
                 self.config = config;
             }
             Message::ToggleDaemon(toggled) => {
-                self.daemon_running = toggled;
                 if toggled {
-                    let sys_status = std::process::Command::new("systemctl")
-                        .args(["--user", "start", "trance-daemon"])
-                        .status();
-                    let success = sys_status.map(|s| s.success()).unwrap_or(false);
-                    if !success {
-                        let _ = std::process::Command::new("trance-daemon")
-                            .arg("daemon")
-                            .spawn();
-                    }
-                } else {
-                    let sys_status = std::process::Command::new("systemctl")
-                        .args(["--user", "stop", "trance-daemon"])
-                        .status();
-                    let success = sys_status.map(|s| s.success()).unwrap_or(false);
-                    if !success {
-                        let pid_path = if let Ok(runtime_dir) = std::env::var("XDG_RUNTIME_DIR") {
-                            std::path::PathBuf::from(runtime_dir).join("trance-daemon.pid")
-                        } else {
-                            std::env::temp_dir().join("trance-daemon.pid")
-                        };
-                        if let Ok(pid_str) = std::fs::read_to_string(&pid_path)
-                            && let Ok(pid) = pid_str.trim().parse::<i32>()
-                        {
-                            unsafe {
-                                libc::kill(pid, libc::SIGTERM);
-                            }
+                    // enable --now so the unit survives logins and upgrades
+                    match crate::daemon_client::start_daemon_service() {
+                        Ok(()) => self.daemon_running = true,
+                        Err(e) => {
+                            tracing::error!("failed to start trance-daemon: {e:#}");
+                            self.daemon_running = crate::daemon_client::is_running();
                         }
                     }
+                    self.refresh_daemon_state();
+                } else {
+                    // Stop only — keep the unit *enabled* for next login.
+                    if let Err(e) = crate::daemon_client::stop_daemon_service() {
+                        tracing::error!("failed to stop trance-daemon: {e:#}");
+                    }
+                    self.daemon_running = crate::daemon_client::is_running();
                 }
             }
             Message::OpenPowerSettings => {
@@ -133,48 +119,15 @@ impl AppModel {
                 };
             }
             Message::MiddleClick => {
-                let saver = self.local_config.active_saver.clone().unwrap_or_else(|| {
-                    if self.screensavers.is_empty() {
-                        "beams".to_string()
-                    } else {
-                        let idx = std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap_or_default()
-                            .as_secs() as usize
-                            % self.screensavers.len();
-                        self.screensavers[idx].clone()
-                    }
-                });
-                let mut started_via_dbus = false;
-                if crate::daemon_client::is_running()
-                    && crate::daemon_client::start_preview(&saver).is_ok()
-                {
-                    started_via_dbus = true;
-                }
-                if !started_via_dbus {
-                    let _ = std::process::Command::new("trance-runner")
-                        .args(["preview", &saver])
-                        .spawn();
+                let saver = self.pick_preview_saver(/* random_if_unset */ true);
+                if let Err(e) = crate::daemon_client::preview_saver(&saver) {
+                    tracing::error!("preview failed for '{saver}': {e:#}");
                 }
             }
             Message::TriggerPreview => {
-                let saver = self.local_config.active_saver.clone().unwrap_or_else(|| {
-                    if self.screensavers.is_empty() {
-                        "beams".to_string()
-                    } else {
-                        self.screensavers[0].clone()
-                    }
-                });
-                let mut started_via_dbus = false;
-                if crate::daemon_client::is_running()
-                    && crate::daemon_client::start_preview(&saver).is_ok()
-                {
-                    started_via_dbus = true;
-                }
-                if !started_via_dbus {
-                    let _ = std::process::Command::new("trance-runner")
-                        .args(["preview", &saver])
-                        .spawn();
+                let saver = self.pick_preview_saver(/* random_if_unset */ false);
+                if let Err(e) = crate::daemon_client::preview_saver(&saver) {
+                    tracing::error!("preview failed for '{saver}': {e:#}");
                 }
             }
             Message::ChangeRenderScale(scale) => {
@@ -229,5 +182,25 @@ impl AppModel {
         };
         app.refresh_daemon_state();
         (app, Task::none())
+    }
+
+    /// Choose which saver to preview: configured active, else first/random from list.
+    fn pick_preview_saver(&self, random_if_unset: bool) -> String {
+        if let Some(name) = self.local_config.active_saver.clone() {
+            return name;
+        }
+        if self.screensavers.is_empty() {
+            return "beams".to_string();
+        }
+        if random_if_unset {
+            let idx = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as usize
+                % self.screensavers.len();
+            self.screensavers[idx].clone()
+        } else {
+            self.screensavers[0].clone()
+        }
     }
 }

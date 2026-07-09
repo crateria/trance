@@ -1,3 +1,11 @@
+trance (0.3.29-1) unstable; urgency=medium
+
+  * Applet polish: enable --now when starting daemon; keep unit enabled on stop.
+  * Preview starts daemon if needed; fallback to trance-daemon run-plugin (not trance-runner).
+  * Applet README: COSMIC-optional install notes.
+
+ -- UberMetroid <jerydleuck@gmail.com>  Thu, 09 Jul 2026 08:00:00 -1000
+
 trance (0.3.28-1) unstable; urgency=medium
 
   * Safer package upgrade path: best-effort user-service try-restart; never fail configure.
