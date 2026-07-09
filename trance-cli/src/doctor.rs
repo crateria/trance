@@ -4,7 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-use anyhow::Result;
+use anyhow::{Context, Result, bail};
 use trance_dbus::TranceClient;
 
 #[derive(Debug)]
@@ -22,10 +22,18 @@ fn chk(name: &'static str, passed: bool, detail: impl Into<String>) -> CheckResu
     }
 }
 
-pub fn run_doctor() -> Result<()> {
+/// Run diagnostics. When `fix` is true, attempt to reload/enable/restart the
+/// user unit so upgrades do not require remembering systemctl flags.
+pub fn run_doctor(fix: bool) -> Result<()> {
     println!("==========================================");
     println!("Trance System Diagnostics (Doctor)");
     println!("==========================================");
+
+    if fix {
+        fix_user_service()?;
+        println!();
+    }
+
     let results = vec![
         check_wayland(),
         check_dbus(),
@@ -36,8 +44,71 @@ pub fn run_doctor() -> Result<()> {
     ];
     print_results(&results);
     if !results.iter().all(|r| r.passed) {
+        if !fix {
+            println!("Hint: try  trance doctor --fix  to reload/enable the user service.");
+        }
         std::process::exit(1);
     }
+    Ok(())
+}
+
+/// Best-effort recovery after package upgrade or a dead session service.
+fn fix_user_service() -> Result<()> {
+    println!("--fix: reloading and ensuring trance-daemon user service...");
+
+    let reload = Command::new("systemctl")
+        .args(["--user", "daemon-reload"])
+        .status()
+        .context("systemctl --user daemon-reload")?;
+    if !reload.success() {
+        bail!(
+            "daemon-reload failed (exit {}). Are you in a graphical user session?",
+            reload.code().unwrap_or(-1)
+        );
+    }
+    println!(" [✔] systemctl --user daemon-reload");
+
+    let _ = Command::new("systemctl")
+        .args(["--user", "reset-failed", "trance-daemon.service"])
+        .status();
+
+    // Enable so future logins start the daemon (idempotent).
+    let enable = Command::new("systemctl")
+        .args(["--user", "enable", "trance-daemon.service"])
+        .status()
+        .context("systemctl --user enable")?;
+    if enable.success() {
+        println!(" [✔] systemctl --user enable trance-daemon");
+    } else {
+        println!(" [!] enable returned non-zero (may already be linked); continuing");
+    }
+
+    // Prefer try-restart when already running; otherwise start.
+    let try_restart = Command::new("systemctl")
+        .args(["--user", "try-restart", "trance-daemon.service"])
+        .status();
+    match try_restart {
+        Ok(st) if st.success() => {
+            println!(" [✔] systemctl --user try-restart trance-daemon");
+        }
+        _ => {
+            let start = Command::new("systemctl")
+                .args(["--user", "start", "trance-daemon.service"])
+                .status()
+                .context("systemctl --user start")?;
+            if start.success() {
+                println!(" [✔] systemctl --user start trance-daemon");
+            } else {
+                bail!(
+                    "could not start trance-daemon (exit {}). Check: journalctl --user -u trance-daemon -n 40",
+                    start.code().unwrap_or(-1)
+                );
+            }
+        }
+    }
+
+    // Brief settle for Type=dbus BusName claim.
+    std::thread::sleep(std::time::Duration::from_millis(300));
     Ok(())
 }
 

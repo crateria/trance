@@ -30,10 +30,19 @@ sudo curl -fsSL https://ubermetroid.github.io/packages/apt/ubermetroid-keyring.g
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/ubermetroid.gpg] https://ubermetroid.github.io/packages/apt stable main" \
   | sudo tee /etc/apt/sources.list.d/ubermetroid.list
 
-# Update and install
+# Core daemon + recommended CLI/TUI/plugins (works on any desktop)
 sudo apt update && sudo apt install trance
+
+# Once per user (makes upgrades reliable):
+systemctl --user enable --now trance-daemon
+# After future upgrades, if the daemon is down:
+trance doctor --fix
 ```
-*Note: Installs recommended plugins (`trance-plugins-all`) and the COSMIC applet (`trance-applet`). For the core package only: `sudo apt install --no-install-recommends trance`.*
+*Recommended with `trance`: `trance-cli`, `trance-tui`, `trance-plugins-all`.*  
+*The COSMIC panel applet is **not** auto-installed (GNOME/KDE/Hyprland only need the TUI/CLI). On COSMIC:*
+```bash
+sudo apt install trance-applet
+```
 
 ### Fedora (DNF)
 ```bash
@@ -41,8 +50,24 @@ sudo apt update && sudo apt install trance
 sudo curl -fsSL https://ubermetroid.github.io/packages/rpm/ubermetroid.repo \
   -o /etc/yum.repos.d/ubermetroid.repo
 
-# 2. Update and install
+# 2. Core install (any DE)
 sudo dnf check-update && sudo dnf install trance
+systemctl --user enable --now trance-daemon
+```
+*On Fedora, if `cosmic-panel` is already installed, dnf may **recommend** `trance-applet` via a rich weak dependency (`trance-applet if cosmic-panel`). Otherwise install it only on COSMIC:*
+```bash
+sudo dnf install trance-applet
+```
+
+### Upgrade path
+Package scripts only **best-effort** restart the *user* service (root cannot always reach your session bus). Preferred flow:
+
+```bash
+# APT
+sudo apt upgrade trance && trance doctor --fix
+
+# DNF
+sudo dnf upgrade trance && trance doctor --fix
 ```
 
 ---
@@ -52,7 +77,10 @@ sudo dnf check-update && sudo dnf install trance
 Trance can be configured dynamically through two visual configuration clients: the COSMIC Panel Applet and the Terminal User Interface (TUI).
 
 ### 1. COSMIC Panel Applet (`trance-applet`)
-If you are running the COSMIC Desktop environment:
+Optional package for the COSMIC Desktop only (not installed by default with `trance`).
+```bash
+sudo apt install trance-applet   # or: sudo dnf install trance-applet
+```
 *   **Activation**: Right-click on your COSMIC panel, select **Add Applet**, search for **Trance**, and add it to your panel.
 *   **Features**:
     *   Toggle the background daemon status.

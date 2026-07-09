@@ -61,7 +61,10 @@ fn run(args: Vec<String>) -> Result<()> {
     }
 
     match args[0].as_str() {
-        "doctor" => return doctor::run_doctor(),
+        "doctor" => {
+            let fix = args.iter().any(|a| a == "--fix" || a == "-f");
+            return doctor::run_doctor(fix);
+        }
         "clean" => return clean::handle_clean(),
         "completion" => return completion::handle_completion(&args[1..]),
         "bug-report" => return bug_report::handle_bug_report(),

@@ -1,5 +1,6 @@
 #!/bin/sh
-# prerm for trance — soft-stop only; never fail the package transaction.
+# RPM %preun — $1 is count remaining after this transaction
+# (0 = full uninstall, 1+ = upgrade). Soft-stop on upgrade/uninstall.
 set -u
 
 for_each_user_session() {
@@ -31,17 +32,15 @@ try_stop_trance() {
     _user_systemctl "$1" "$2" stop trance-daemon.service || true
 }
 
-case "${1:-}" in
-    remove|upgrade|deconfigure)
-        # Soft stop so the binary can be replaced; postinst will try-restart.
-        for_each_user_session try_stop_trance
-        ;;
-esac
+# Always soft-stop so the binary can be replaced or removed.
+for_each_user_session try_stop_trance
 
-if [ "${1:-}" = "remove" ]; then
-    if command -v deb-systemd-helper >/dev/null 2>&1; then
-        deb-systemd-helper --user disable trance-daemon.service >/dev/null 2>&1 || true
-    fi
+# Full uninstall: try to disable for session users (best-effort).
+if [ "${1:-0}" -eq 0 ]; then
+    try_disable() {
+        _user_systemctl "$1" "$2" disable trance-daemon.service || true
+    }
+    for_each_user_session try_disable
 fi
 
 exit 0

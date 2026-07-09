@@ -1,3 +1,14 @@
+trance (0.3.28-1) unstable; urgency=medium
+
+  * Safer package upgrade path: best-effort user-service try-restart; never fail configure.
+  * RPM gains %post/%preun scriptlets for the same soft lifecycle.
+  * Stop auto-installing trance-applet; Suggests only (COSMIC optional).
+  * Fedora: Recommends (trance-applet if cosmic-panel) rich weak dependency.
+  * Remove TRANCE_DBUS_TRUST_ALL from the systemd unit (debug-only at runtime).
+  * trance doctor --fix reloads/enables/restarts the user service after upgrades.
+
+ -- UberMetroid <jerydleuck@gmail.com>  Thu, 09 Jul 2026 07:30:00 -1000
+
 trance (0.3.16-1) flux; urgency=medium
 
   * Upgrade to 0.3.16 version.

@@ -16,7 +16,7 @@ pub fn print_usage() {
            stop                   Stop preview or idle presentation\n\
            fps-overlay on|off|status  Toggle on-screen FPS overlay\n\
            render-scale <0.25-1.0>|default|status  Simulation grid density (zoom)\n\
-           doctor                 Run system diagnostics\n\
+           doctor [--fix|-f]      Run system diagnostics; --fix reloads/enables the user service\n\
            config get/set/list    Unified configuration manager\n\
            completion bash/zsh    Generate shell tab-completion scripts\n\
            clean                  Clean stale runs and log caches\n\

@@ -9,7 +9,7 @@ Type=dbus
 BusName=io.github.ubermetroid.trance
 ExecStartPre=/usr/bin/mkdir -p %h/.config/trance
 ExecStart=/usr/bin/trance-daemon daemon
-Environment=TRANCE_DBUS_TRUST_ALL=1
+# Do not set TRANCE_DBUS_TRUST_ALL here: release builds ignore it (debug-only).
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=10

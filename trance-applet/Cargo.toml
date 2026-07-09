@@ -1,6 +1,6 @@
 [package]
 name = "trance-applet"
-version = "0.3.27"
+version = "0.3.28"
 edition = "2024"
 license = "Apache-2.0"
 description = "COSMIC Desktop panel applet for the trance screensavers"
@@ -54,8 +54,10 @@ name = "trance-applet"
 changelog = "debian/changelog"
 copyright = "2026 UberMetroid"
 maintainer = "UberMetroid <jerydleuck@gmail.com>"
-extended-description = "Native System76 COSMIC Desktop panel applet for the trance screensaver daemon."
+extended-description = "Native System76 COSMIC Desktop panel applet for the trance screensaver daemon. Optional: install only on COSMIC (not needed for GNOME/KDE/Hyprland — use trance-tui there)."
 depends = "libc6, trance"
+# Advertise that this package enhances COSMIC; core `trance` only Suggests it.
+enhances = "cosmic-session, cosmic-panel"
 section = "utils"
 priority = "optional"
 assets = [
@@ -83,3 +85,9 @@ assets = [
 
 [package.metadata.generate-rpm.requires]
 trance = "*"
+
+# Soft reverse dependency: when cosmic-panel is installed, dnf may offer this
+# applet (weak deps). Does not pull the applet onto GNOME/KDE-only systems
+# unless they also have cosmic-panel.
+[package.metadata.generate-rpm.supplements]
+cosmic-panel = "*"
