@@ -64,6 +64,9 @@ case "${1:-}" in
     configure)
         echo "Configuring trance user service (best-effort)..."
 
+        # Remove legacy XDG autostart (systemd user unit is the only start path).
+        rm -f /etc/xdg/autostart/trance-daemon.desktop 2>/dev/null || true
+
         if command -v deb-systemd-helper >/dev/null 2>&1; then
             deb-systemd-helper --user unmask trance-daemon.service >/dev/null 2>&1 || true
             # Preset/enable helper state; per-user enable still recommended once.

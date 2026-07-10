@@ -125,7 +125,7 @@ fn is_trusted_plugin_path_cached(path: &Path, canonical_trusted_dirs: &[PathBuf]
 
     #[cfg(unix)]
     {
-        use std::os::unix::fs::PermissionsExt;
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
         if let Ok(meta) = std::fs::metadata(&canonical) {
             // Reject world-writable plugins.
             if meta.permissions().mode() & 0o002 != 0 {
@@ -133,6 +133,17 @@ fn is_trusted_plugin_path_cached(path: &Path, canonical_trusted_dirs: &[PathBuf]
                     target: "plugin",
                     path = %canonical.display(),
                     "refusing world-writable plugin library"
+                );
+                return false;
+            }
+            // System packages live under /usr; require root ownership so a
+            // non-root user cannot plant a .so in a system plugin directory.
+            if canonical.starts_with("/usr") && meta.uid() != 0 {
+                tracing::warn!(
+                    target: "plugin",
+                    path = %canonical.display(),
+                    uid = meta.uid(),
+                    "refusing non-root-owned system plugin library"
                 );
                 return false;
             }

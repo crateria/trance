@@ -64,7 +64,7 @@ fn is_trusted_control_peer(pid: u32) -> bool {
         return false;
     }
     let parent = target.parent().and_then(|p| p.to_str()).unwrap_or("");
-    let is_ok = parent == "/usr/bin"
+    let path_ok = parent == "/usr/bin"
         || parent == "/usr/local/bin"
         || (cfg!(debug_assertions)
             && {
@@ -87,14 +87,52 @@ fn is_trusted_control_peer(pid: u32) -> bool {
                     false
                 }
             });
-    if !is_ok {
+    if !path_ok {
         tracing::warn!(
             "D-Bus auth check: path {:?} parent {:?} not trusted",
             target,
             parent
         );
+        return false;
     }
-    is_ok
+
+    // Production installs: binary must be root-owned and not world-writable so a
+    // user cannot drop a fake `trance` next to the real one in a shared dir.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        match std::fs::metadata(&target) {
+            Ok(meta) => {
+                let mode = meta.mode();
+                if mode & 0o002 != 0 {
+                    tracing::warn!(
+                        "D-Bus auth check: refusing world-writable peer binary {:?}",
+                        target
+                    );
+                    return false;
+                }
+                // Only enforce root ownership for the system prefixes (not debug same-dir peers).
+                if (parent == "/usr/bin" || parent == "/usr/local/bin") && meta.uid() != 0 {
+                    tracing::warn!(
+                        "D-Bus auth check: refusing non-root-owned peer binary {:?} (uid {})",
+                        target,
+                        meta.uid()
+                    );
+                    return false;
+                }
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "D-Bus auth check: cannot stat peer binary {:?}: {:?}",
+                    target,
+                    e
+                );
+                return false;
+            }
+        }
+    }
+
+    true
 }
 
 /// Control methods (preview, config writes) require trance CLI or applet.

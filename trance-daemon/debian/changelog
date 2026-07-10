@@ -1,3 +1,11 @@
+trance (0.3.32-1) unstable; urgency=medium
+
+  * CI: advisory check + core tests on every push/PR.
+  * Security: D-Bus peers must be root-owned under /usr/bin; system plugins too.
+  * Single start path: drop XDG autostart; systemd user unit only (remove legacy file on upgrade).
+
+ -- UberMetroid <jerydleuck@gmail.com>  Fri, 10 Jul 2026 05:00:00 -1000
+
 trance (0.3.31-1) unstable; urgency=medium
 
   * Security: bump ratatui to 0.30 / crossterm 0.29 so vulnerable lru 0.12.x is gone.

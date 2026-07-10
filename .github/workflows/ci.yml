@@ -1,0 +1,63 @@
+# Keeps security regressions visible: advisory check + unit tests on every push/PR.
+# Uses only GitHub-hosted runner + rustup (no third-party Actions).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  advisories:
+    name: Security advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked
+
+      - name: cargo deny check advisories
+        run: cargo deny check advisories
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libraries (wayland / dbus for daemon crates)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libdbus-1-dev pkg-config \
+            libwayland-dev libxkbcommon-dev
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      # Skip trance-applet in CI: pulls full libcosmic/wgpu and is optional COSMIC-only UI.
+      - name: cargo test (core + tui + cli)
+        run: |
+          cargo test \
+            -p trance-api \
+            -p trance-runner \
+            -p trance-dbus \
+            -p trance-upscaler \
+            -p wayland-idle \
+            -p wayland-present \
+            -p trance-daemon \
+            -p trance-cli \
+            -p trance-tui \
+            --all-features

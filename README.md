@@ -66,7 +66,7 @@ sudo apt install trance-applet    # or: sudo dnf install trance-applet
 
 ### 3. Start the daemon (once per user)
 
-It runs as a **user** service (your session / Wayland), not as a system service:
+It runs as a **user** systemd service (your session / Wayland)—not a system service, and not XDG autostart:
 
 ```bash
 systemctl --user enable --now trance-daemon

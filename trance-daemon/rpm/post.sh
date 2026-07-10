@@ -40,6 +40,9 @@ try_restart_trance() {
 }
 
 echo "trance RPM post-install (best-effort user service reload)..."
+# Remove legacy XDG autostart (systemd user unit is the only start path).
+rm -f /etc/xdg/autostart/trance-daemon.desktop 2>/dev/null || true
+
 for_each_user_session try_reload_user_units
 for_each_user_session try_restart_trance
 

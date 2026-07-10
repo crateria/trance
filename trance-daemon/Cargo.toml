@@ -1,6 +1,6 @@
 [package]
 name = "trance-daemon"
-version = "0.3.31"
+version = "0.3.32"
 edition = "2024"
 description = "Background idle daemon and core package for trance screensavers"
 license = "Apache-2.0"
@@ -48,10 +48,11 @@ suggests = "trance-applet"
 section = "utils"
 priority = "optional"
 maintainer-scripts = "debian"
+# One start path only: systemd user unit (+ D-Bus activation). XDG autostart
+# was removed so upgrades/logins do not double-start or fight the unit.
 assets = [
     ["target/release/trance-daemon", "usr/bin/trance-daemon", "755"],
     ["assets/trance-daemon.service", "usr/lib/systemd/user/trance-daemon.service", "644"],
-    ["assets/trance-daemon.desktop", "etc/xdg/autostart/trance-daemon.desktop", "644"],
     ["assets/io.github.ubermetroid.trance.service", "usr/share/dbus-1/services/io.github.ubermetroid.trance.service", "644"],
     ["assets/io.github.ubermetroid.trance.policy", "usr/share/polkit-1/actions/io.github.ubermetroid.trance.policy", "644"],
     ["assets/trance-daemon.1", "usr/share/man/man1/trance-daemon.1", "644"],
@@ -71,7 +72,6 @@ pre_uninstall_script = "rpm/preun.sh"
 assets = [
     { source = "target/release/trance-daemon", dest = "/usr/bin/trance-daemon", mode = "755" },
     { source = "assets/trance-daemon.service", dest = "/usr/lib/systemd/user/trance-daemon.service", mode = "644" },
-    { source = "assets/trance-daemon.desktop", dest = "/etc/xdg/autostart/trance-daemon.desktop", mode = "644" },
     { source = "assets/io.github.ubermetroid.trance.service", dest = "/usr/share/dbus-1/services/io.github.ubermetroid.trance.service", mode = "644" },
     { source = "assets/io.github.ubermetroid.trance.policy", dest = "/usr/share/polkit-1/actions/io.github.ubermetroid.trance.policy", mode = "644" },
     { source = "assets/trance-daemon.1", dest = "/usr/share/man/man1/trance-daemon.1", mode = "644" },
