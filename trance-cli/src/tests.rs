@@ -49,7 +49,21 @@ fn test_invalid_command() {
 #[test]
 fn test_version_commands() {
     assert!(run(vec!["version".to_string()]).is_ok());
+    assert!(run(vec!["v".to_string()]).is_ok());
     assert!(run(vec!["--version".to_string()]).is_ok());
     assert!(run(vec!["-V".to_string()]).is_ok());
     assert!(run(vec!["about".to_string()]).is_ok());
+}
+
+#[test]
+fn test_help_flags() {
+    assert!(run(vec!["help".to_string()]).is_ok());
+    assert!(run(vec!["-h".to_string()]).is_ok());
+    assert!(run(vec!["--help".to_string()]).is_ok());
+}
+
+#[test]
+fn test_reject_single_dash_long_options() {
+    assert!(run(vec!["-help".to_string()]).is_err());
+    assert!(run(vec!["-version".to_string()]).is_err());
 }

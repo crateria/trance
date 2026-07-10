@@ -98,19 +98,21 @@ Same daemon, three front ends:
 ### CLI
 
 ```bash
-trance version                  # or: trance --version / trance -V
-trance about                    # version + short project info
-trance status
-trance enable | disable
-trance timeout 10
-trance list
+trance version                  # also: v, --version, -V
+trance about                    # longer blurb
+trance status                   # also: st
+trance enable | disable         # also: on / off
+trance timeout 10               # also: t 10
+trance list                     # also: ls
 trance saver set beams          # or: random
-trance preview storm
+trance preview storm            # also: p storm
 trance stop
-trance doctor [--fix]
+trance doctor [--fix]          # also: doc
+trance self-update              # also: update
 ```
 
-See also: `trance help` (`config`, `fps-overlay`, `render-scale`, `completion`, …).
+Flags use GNU style: `-h` / `--help`, `-V` / `--version` (not `-help` or `-version`).  
+See `trance help` for the full list (including `config`, `fps`, `scale`, …).
 
 ### TUI
 

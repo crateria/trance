@@ -1,3 +1,9 @@
+trance (0.3.35-1) unstable; urgency=medium
+
+  * CLI: standard flags (-h/--help, -V/--version) plus short subcommands (v, st, p, …).
+
+ -- UberMetroid <jerydleuck@gmail.com>  Fri, 10 Jul 2026 06:00:00 -1000
+
 trance (0.3.34-1) unstable; urgency=medium
 
   * Fix self-update on Fedora: detect RPM install even when apt-cache exists.

@@ -55,57 +55,86 @@ fn init_tracing() {
 
 #[tracing::instrument(skip_all)]
 fn run(args: Vec<String>) -> Result<()> {
-    if args.is_empty() || matches!(args[0].as_str(), "-h" | "--help" | "help") {
+    if args.is_empty() {
         print_usage();
         return Ok(());
     }
 
-    // Version works without a running daemon.
-    match args[0].as_str() {
-        "version" | "about" | "--version" | "-V" => {
-            print_version(args[0].as_str() == "about" || args.get(1).map(String::as_str) == Some("--verbose") || args.get(1).map(String::as_str) == Some("-v"));
+    let head = args[0].as_str();
+    let rest = &args[1..];
+
+    // --- Global flags (GNU style: -x short, --word long) ---
+    // Not subcommands; never require a running daemon.
+    match head {
+        "-h" | "--help" => {
+            print_usage();
             return Ok(());
+        }
+        "-V" | "--version" => {
+            print_version(false);
+            return Ok(());
+        }
+        // Single-dash long words are not valid GNU flags.
+        "-help" => {
+            bail!("unknown option: -help (use --help or -h, or: trance help)");
+        }
+        "-version" => {
+            bail!("unknown option: -version (use --version or -V, or: trance version / trance v)");
         }
         _ => {}
     }
 
-    match args[0].as_str() {
-        "doctor" => {
-            let fix = args.iter().any(|a| a == "--fix" || a == "-f");
+    // --- Subcommands (no leading dashes; short aliases allowed) ---
+    match head {
+        "help" => {
+            print_usage();
+            return Ok(());
+        }
+        "version" | "v" => {
+            print_version(false);
+            return Ok(());
+        }
+        "about" => {
+            print_version(true);
+            return Ok(());
+        }
+        "doctor" | "doc" => {
+            let fix = rest.iter().any(|a| a == "--fix" || a == "-f");
             return doctor::run_doctor(fix);
         }
         "clean" => return clean::handle_clean(),
-        "completion" => return completion::handle_completion(&args[1..]),
+        "completion" => return completion::handle_completion(rest),
         "bug-report" => return bug_report::handle_bug_report(),
-        "self-update" => return self_update::handle_self_update(),
+        "self-update" | "update" => return self_update::handle_self_update(),
         _ => {}
     }
 
+    // Commands below need the daemon on the session bus.
     let client = if daemon_available() {
         TranceClient::connect().context("failed to connect to daemon")?
     } else {
         bail!("trance-daemon is not running; start it with: systemctl --user start trance-daemon");
     };
 
-    match args[0].as_str() {
-        "status" => cmd_status(&client, &args[1..]),
-        "config" => config::handle_config(&client, &args[1..]),
-        "interactive" => interactive::run_interactive(&client),
-        "enable" => client.enable().context("enabling idle screensaver"),
-        "disable" => client.disable().context("disabling idle screensaver"),
-        "timeout" => cmd_timeout(&client, &args[1..]),
-        "saver" => cmd_saver(&client, &args[1..]),
-        "list" => cmd_list(&client),
+    match head {
+        "status" | "st" => cmd_status(&client, rest),
+        "config" | "cfg" => config::handle_config(&client, rest),
+        "interactive" | "i" => interactive::run_interactive(&client),
+        "enable" | "on" => client.enable().context("enabling idle screensaver"),
+        "disable" | "off" => client.disable().context("disabling idle screensaver"),
+        "timeout" | "t" => cmd_timeout(&client, rest),
+        "saver" => cmd_saver(&client, rest),
+        "list" | "ls" => cmd_list(&client),
         "inhibitors" => cmd_inhibitors(&client),
-        "preview" => cmd_preview(&client, &args[1..]),
+        "preview" | "p" => cmd_preview(&client, rest),
         "stop" => client
             .stop_preview()
             .context("stopping preview or idle presentation"),
-        "fps-overlay" => cmd_fps_overlay(&client, &args[1..]),
-        "render-scale" => cmd_render_scale(&client, &args[1..]),
+        "fps-overlay" | "fps" => cmd_fps_overlay(&client, rest),
+        "render-scale" | "scale" => cmd_render_scale(&client, rest),
         _ => {
             print_usage();
-            Err(anyhow::anyhow!("unknown command: {}", args[0]))
+            Err(anyhow::anyhow!("unknown command: {head}"))
         }
     }
 }
