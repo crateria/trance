@@ -17,13 +17,13 @@ Works on any Wayland desktop. Control it with the **CLI**, **TUI**, or optional 
 
 ## Install
 
-**Idea:** add the UberMetroid package repo once, then always:
+**Idea:** add the crateria package repo once, then always:
 
 ```text
 install / upgrade trance  →  enable the user daemon once
 ```
 
-Packages live at [UberMetroid/packages](https://github.com/UberMetroid/packages) (not in distro base repos).
+Packages live at [crateria/packages](https://github.com/crateria/packages) (not in distro base repos).
 
 ### 1. Add the repo (once per machine)
 
@@ -34,10 +34,10 @@ APT needs a GPG key + sources line so it can trust and find the packages:
 
 ```bash
 sudo mkdir -p /etc/apt/keyrings
-sudo curl -fsSL https://ubermetroid.github.io/packages/apt/ubermetroid-keyring.gpg \
-  -o /etc/apt/keyrings/ubermetroid.gpg
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/ubermetroid.gpg] https://ubermetroid.github.io/packages/apt stable main" \
-  | sudo tee /etc/apt/sources.list.d/ubermetroid.list
+sudo curl -fsSL https://crateria.github.io/packages/apt/crateria-keyring.gpg \
+  -o /etc/apt/keyrings/crateria.gpg
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/crateria.gpg] https://crateria.github.io/packages/apt stable main" \
+  | sudo tee /etc/apt/sources.list.d/crateria.list
 sudo apt update
 ```
 
@@ -47,8 +47,8 @@ sudo apt update
 <summary><strong>Fedora</strong></summary>
 
 ```bash
-sudo curl -fsSL https://ubermetroid.github.io/packages/rpm/ubermetroid.repo \
-  -o /etc/yum.repos.d/ubermetroid.repo
+sudo curl -fsSL https://crateria.github.io/packages/rpm/crateria.repo \
+  -o /etc/yum.repos.d/crateria.repo
 ```
 
 </details>
