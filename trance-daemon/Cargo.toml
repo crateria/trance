@@ -20,7 +20,7 @@ trance-upscaler = { workspace = true }
 wayland-idle = { workspace = true }
 wayland-present = { workspace = true }
 libc = { workspace = true }
-signal-hook = "0.3"
+signal-hook = "0.4"
 zbus = { workspace = true }
 futures-lite = "2.6"
 tokio = { workspace = true }
