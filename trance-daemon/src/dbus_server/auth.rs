@@ -139,7 +139,7 @@ fn check_peer_exe(pid: u32) -> PeerExeCheck {
     PeerExeCheck::Trusted
 }
 
-fn is_trusted_control_peer(pid: u32, peer_uid: Option<u32>) -> bool {
+fn is_trusted_control_peer(pid: u32, peer_uid: Option<u32>, peer_name: &str) -> bool {
     // Escape hatch is debug-only so release builds cannot be opened with
     // `TRANCE_DBUS_TRUST_ALL=1` by a local attacker.
     if cfg!(debug_assertions) && std::env::var("TRANCE_DBUS_TRUST_ALL").ok().as_deref() == Some("1")
@@ -162,8 +162,8 @@ fn is_trusted_control_peer(pid: u32, peer_uid: Option<u32>) -> bool {
                 let our_uid = unsafe { libc::geteuid() };
                 if let Some(uid) = peer_uid {
                     if uid == our_uid {
-                        tracing::info!(
-                            "D-Bus auth: peer pid {pid} uid {uid} accepted via same-UID fallback (peer exe unreadable)"
+                        tracing::warn!(
+                            "D-Bus auth: peer {peer_name} (pid {pid}, uid {uid}) accepted via same-UID fallback (peer exe unreadable)"
                         );
                         return true;
                     }
@@ -176,6 +176,7 @@ fn is_trusted_control_peer(pid: u32, peer_uid: Option<u32>) -> bool {
             #[cfg(not(unix))]
             {
                 let _ = peer_uid;
+                let _ = peer_name;
             }
             tracing::warn!("D-Bus auth: peer exe unreadable and no UID to fall back on");
             false
@@ -204,7 +205,7 @@ pub async fn require_control_peer(
         .ok_or_else(|| zbus::fdo::Error::AccessDenied("D-Bus peer PID unavailable".into()))?;
     let peer_uid = creds.unix_user_id();
 
-    if is_trusted_control_peer(pid, peer_uid) {
+    if is_trusted_control_peer(pid, peer_uid, sender.as_str()) {
         tracing::info!("D-Bus control peer accepted (pid {pid})");
         Ok(())
     } else {
@@ -250,11 +251,12 @@ mod tests {
         {
             let uid = unsafe { libc::geteuid() };
             // Nonexistent PID → Unreadable → same-UID accepts.
-            assert!(is_trusted_control_peer(u32::MAX, Some(uid)));
+            assert!(is_trusted_control_peer(u32::MAX, Some(uid), ":1.42"));
             // Non-matching UID must never be accepted on unreadable exe.
             assert!(!is_trusted_control_peer(
                 u32::MAX,
-                Some(uid.wrapping_add(1))
+                Some(uid.wrapping_add(1)),
+                ":1.42"
             ));
         }
     }

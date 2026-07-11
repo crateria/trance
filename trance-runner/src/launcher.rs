@@ -73,6 +73,9 @@ pub fn sanitize_saver_name(raw: &str) -> Option<String> {
 }
 
 fn dev_plugin_dirs(clean: &str) -> Vec<PathBuf> {
+    if !cfg!(debug_assertions) && std::env::var("TRANCE_DEV_PLUGINS").ok().as_deref() != Some("1") {
+        return Vec::new();
+    }
     let Ok(home) = std::env::var("HOME") else {
         return Vec::new();
     };
@@ -214,10 +217,10 @@ pub fn resolve_saver_binary(name: &str, mode: &LaunchMode) -> std::io::Result<Pa
         .collect();
     let dev_dirs = dev_plugin_dirs(&clean);
     let search_order: Vec<&Path> = if *mode == LaunchMode::Preview {
-        dev_dirs
+        trusted_dirs
             .iter()
             .map(|p| p.as_path())
-            .chain(trusted_dirs.iter().map(|p| p.as_path()))
+            .chain(dev_dirs.iter().map(|p| p.as_path()))
             .collect()
     } else {
         trusted_dirs.iter().map(|p| p.as_path()).collect()

@@ -123,3 +123,22 @@ fn plugin_error_display_includes_context() {
     let err = PluginError::PathTraversal;
     assert!(err.to_string().contains(".."));
 }
+
+#[test]
+fn test_dev_plugin_dirs_env_behavior() {
+    unsafe {
+        std::env::set_var("TRANCE_DEV_PLUGINS", "1");
+    }
+    let dirs_with_env = dev_plugin_dirs("beams");
+    assert!(!dirs_with_env.is_empty());
+
+    unsafe {
+        std::env::remove_var("TRANCE_DEV_PLUGINS");
+    }
+    let dirs_no_env = dev_plugin_dirs("beams");
+    if cfg!(debug_assertions) {
+        assert!(!dirs_no_env.is_empty());
+    } else {
+        assert!(dirs_no_env.is_empty());
+    }
+}

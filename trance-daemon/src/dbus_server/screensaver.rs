@@ -77,9 +77,14 @@ impl ScreenSaverService {
         active
     }
 
-    async fn set_active(&self, active: bool) {
+    async fn set_active(
+        &self,
+        active: bool,
+        #[zbus(header)] header: zbus::message::Header<'_>,
+    ) -> zbus::fdo::Result<()> {
         tracing::info!("ScreenSaver: SetActive requested: {}", active);
         if active {
+            super::service_helpers::authorize_control(&self.controller, &header).await?;
             let saver = self
                 .controller
                 .config
@@ -99,6 +104,7 @@ impl ScreenSaverService {
                 .send(DaemonCommand::StopPresentation);
         }
         self.controller.mark_dirty();
+        Ok(())
     }
 
     async fn lock(&self) {
@@ -150,12 +156,19 @@ mod tests {
             controller: controller.clone(),
         };
 
-        service.set_active(true).await;
-        let commands = controller.drain_commands();
-        assert_eq!(commands.len(), 1);
-        assert!(matches!(commands[0], DaemonCommand::Preview(_)));
+        let msg = zbus::message::Message::method_call("/org/freedesktop/ScreenSaver", "SetActive")
+            .unwrap()
+            .build(&(true,))
+            .unwrap();
+        let header = msg.header();
 
-        service.set_active(false).await;
+        // active = true should fail with D-Bus connection unavailable error
+        assert!(service.set_active(true, header.clone()).await.is_err());
+        let commands = controller.drain_commands();
+        assert_eq!(commands.len(), 0);
+
+        // active = false does not require authorization and should succeed
+        assert!(service.set_active(false, header.clone()).await.is_ok());
         let commands = controller.drain_commands();
         assert_eq!(commands.len(), 1);
         assert!(matches!(commands[0], DaemonCommand::StopPresentation));

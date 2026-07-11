@@ -64,6 +64,10 @@ fn drive_presentation_chain(
         }
         *preview_name = None;
     } else if let Some(name) = preview_name.clone() {
+        if presentation.is_active() && current_saver != &name {
+            stop_presentation(Some(overlay_presenter), presentation);
+            current_saver.clear();
+        }
         if !presentation.is_active() {
             start_presentation(
                 overlay_presenter,
