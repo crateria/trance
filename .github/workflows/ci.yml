@@ -96,3 +96,35 @@ jobs:
             -p trance-cli \
             -p trance-tui \
             --all-features
+
+      - name: Install cargo-binstall
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf \
+            https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Install cargo-deb and cargo-generate-rpm
+        run: |
+          cargo binstall -y cargo-deb cargo-generate-rpm
+
+      - name: Build release binaries
+        run: |
+          cargo build --release \
+            -p trance-daemon \
+            -p trance-cli \
+            -p trance-plugins-all \
+            -p trance-applet \
+            -p trance-tui
+
+      - name: Verify package creation
+        run: |
+          cargo deb --no-build -p trance-daemon
+          cargo deb --no-build -p trance-cli
+          cargo deb --no-build -p trance-plugins-all
+          cargo deb --no-build -p trance-applet
+          cargo deb --no-build -p trance-tui
+          cargo generate-rpm -p trance-daemon
+          cargo generate-rpm -p trance-cli
+          cargo generate-rpm -p trance-plugins-all
+          cargo generate-rpm -p trance-applet
+          cargo generate-rpm -p trance-tui
