@@ -1,6 +1,6 @@
 [package]
 name = "trance-runner"
-version = "0.3.44"
+version = "0.3.45"
 edition = "2024"
 description = "Shared runner logic for the terminal screensavers"
 license = "Apache-2.0"
@@ -11,8 +11,8 @@ workspace = true
 [dependencies]
 libc = { workspace = true }
 trance-api = { workspace = true }
-libloading = "0.8"
-crossterm = "0.28"
+libloading = "0.9"
+crossterm = "0.29"
 sysinfo = "0.39"
 fontdue = "0.9"
 trance-upscaler = { workspace = true }

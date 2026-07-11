@@ -82,7 +82,7 @@ fn get_system_info_raw() -> SystemInfo {
         0.0
     };
 
-    let cpu_usage_pct = sys.global_cpu_info().cpu_usage();
+    let cpu_usage_pct = sys.global_cpu_usage();
     let uptime_secs = sysinfo::System::uptime();
 
     let power = query_power_status().unwrap_or_default();
