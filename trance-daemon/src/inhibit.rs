@@ -41,12 +41,19 @@ impl InhibitorState {
             return true;
         }
 
-        let mut cache = self.logind_cache.lock().unwrap();
-        if cache.1.elapsed() >= std::time::Duration::from_secs(2) {
-            cache.0 = check_logind_inhibited();
-            cache.1 = std::time::Instant::now();
+        #[cfg(test)]
+        {
+            false
         }
-        cache.0
+        #[cfg(not(test))]
+        {
+            let mut cache = self.logind_cache.lock().unwrap();
+            if cache.1.elapsed() >= std::time::Duration::from_secs(2) {
+                cache.0 = check_logind_inhibited();
+                cache.1 = std::time::Instant::now();
+            }
+            cache.0
+        }
     }
 
     pub fn add(

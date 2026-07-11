@@ -1,3 +1,9 @@
+trance (0.3.40-1) unstable; urgency=medium
+
+  * Fix trance-daemon unit tests by mocking system D-Bus checks.
+
+ -- UberMetroid <jerydleuck@gmail.com>  Fri, 10 Jul 2026 17:33:00 -1000
+
 trance (0.3.39-1) unstable; urgency=medium
 
   * Allowlist new effects: tide, loom, relay.
