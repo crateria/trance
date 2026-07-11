@@ -1,10 +1,15 @@
 # Trance
 
-<img src="assets/icon.svg" width="48" height="48" alt="trance logo" align="right">
+<p align="center">
+  <img src="assets/icon.png" width="128" height="128" alt="Trance">
+</p>
 
-Wayland-native screensaver for Linux. A background daemon watches for idle time and shows modular effects (beams, storm, radar, and more).
+<p align="center">
+  <strong>Wayland-native screensaver</strong> for Linux — part of
+  <a href="https://github.com/crateria">Crateria</a>
+</p>
 
-Works on any Wayland desktop. Control it with the **CLI**, **TUI**, or optional **COSMIC** panel applet.
+A background daemon watches for idle time and shows modular effects (beams, storm, radar, and more). Works on any Wayland desktop. Control it with the **CLI**, **TUI**, or optional **COSMIC** panel applet.
 
 ### What’s new (0.3.38)
 
@@ -174,8 +179,14 @@ trance-tui
 
 ## Links
 
-* [packages](https://github.com/crateria/packages) · [trance-plugins](https://github.com/crateria/trance-plugins) · [SECURITY.md](SECURITY.md)
+| | |
+|--|--|
+| Org | [crateria](https://github.com/crateria) |
+| Effects | [trance-plugins](https://github.com/crateria/trance-plugins) |
+| Packages | [packages](https://github.com/crateria/packages) · [install site](https://crateria.github.io/packages/) |
+| Brand kit | [brand](https://github.com/crateria/brand) |
+| Security | [SECURITY.md](SECURITY.md) |
 
 ## License
 
-[Apache-2.0](LICENSE) · Copyright 2026 crateria
+[Apache-2.0](LICENSE) · Copyright 2026 [Crateria](https://github.com/crateria)
