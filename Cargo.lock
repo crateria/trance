@@ -5608,7 +5608,7 @@ dependencies = [
 
 [[package]]
 name = "trance-applet"
-version = "0.3.44"
+version = "0.3.45"
 dependencies = [
  "anyhow",
  "i18n-embed",
@@ -5625,7 +5625,7 @@ dependencies = [
 
 [[package]]
 name = "trance-cli"
-version = "0.3.46"
+version = "0.3.47"
 dependencies = [
  "anyhow",
  "libc",
@@ -5637,7 +5637,7 @@ dependencies = [
 
 [[package]]
 name = "trance-daemon"
-version = "0.3.44"
+version = "0.3.45"
 dependencies = [
  "anyhow",
  "futures-lite",
@@ -5670,7 +5670,7 @@ version = "0.3.44"
 
 [[package]]
 name = "trance-runner"
-version = "0.3.44"
+version = "0.3.45"
 dependencies = [
  "crossterm 0.28.1",
  "fontdue",
@@ -5686,7 +5686,7 @@ dependencies = [
 
 [[package]]
 name = "trance-tui"
-version = "0.3.44"
+version = "0.3.45"
 dependencies = [
  "anyhow",
  "crossterm 0.29.0",
@@ -6092,7 +6092,7 @@ dependencies = [
 
 [[package]]
 name = "wayland-idle"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "libc",
  "tracing",

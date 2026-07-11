@@ -257,26 +257,29 @@ fn check_fonts() -> CheckResult {
 fn check_package_install() -> CheckResult {
     // Prefer RPM: Fedora often has apt-cache on PATH too.
     if let Ok(o) = Command::new("rpm")
-        .args(["-q", "trance", "--qf", "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}"])
+        .args([
+            "-q",
+            "trance",
+            "--qf",
+            "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}",
+        ])
         .output()
+        && o.status.success()
     {
-        if o.status.success() {
-            let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-            println!(" [✔] Package (RPM): {ver}");
-            println!("     -> Upgrade with: sudo dnf update");
-            return chk("Package", true, ver);
-        }
+        let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
+        println!(" [✔] Package (RPM): {ver}");
+        println!("     -> Upgrade with: sudo dnf update");
+        return chk("Package", true, ver);
     }
     if let Ok(o) = Command::new("dpkg-query")
         .args(["-W", "-f=${Package} ${Version}", "trance"])
         .output()
+        && o.status.success()
     {
-        if o.status.success() {
-            let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-            println!(" [✔] Package (DEB): {ver}");
-            println!("     -> Upgrade with: sudo apt update && sudo apt upgrade");
-            return chk("Package", true, ver);
-        }
+        let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
+        println!(" [✔] Package (DEB): {ver}");
+        println!("     -> Upgrade with: sudo apt update && sudo apt upgrade");
+        return chk("Package", true, ver);
     }
     println!(" [!] Package: trance not found via RPM or dpkg.");
     println!("     -> Install from the crateria apt/dnf repository.");

@@ -30,7 +30,6 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
-          arguments: advisories
 
   test:
     name: Tests
@@ -66,6 +65,12 @@ jobs:
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           rustup show
           rustc --version
+
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets
 
       # Skip trance-applet: optional COSMIC UI, huge libcosmic/wgpu build.
       - name: cargo test (core + tui + cli)
