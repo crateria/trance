@@ -95,6 +95,7 @@ jobs:
           git add -A
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "style: auto-format and apply clippy fixes"
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/crateria/trance.git
             git push origin HEAD:${{ github.head_ref || github.ref_name }}
           fi
 
