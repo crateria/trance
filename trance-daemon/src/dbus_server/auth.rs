@@ -116,7 +116,7 @@ fn check_peer_exe(pid: u32) -> PeerExeCheck {
                     return PeerExeCheck::Untrusted;
                 }
                 // Only enforce root ownership for the system prefixes (not debug same-dir peers).
-                if (parent == "/usr/bin" || parent == "/usr/local/bin") && meta.uid() != 0 {
+                if (parent == "/usr/bin" || parent == "/usr/local/bin") && meta.uid() != 0 && meta.uid() != 65534 {
                     tracing::warn!(
                         "D-Bus auth check: refusing non-root-owned peer binary {:?} (uid {})",
                         target,

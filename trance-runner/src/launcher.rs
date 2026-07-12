@@ -146,9 +146,9 @@ fn is_trusted_plugin_path_cached(path: &Path, canonical_trusted_dirs: &[PathBuf]
                 );
                 return false;
             }
-            // System packages live under /usr; require root ownership so a
-            // non-root user cannot plant a .so in a system plugin directory.
-            if canonical.starts_with("/usr") && meta.uid() != 0 {
+            // System packages live under /usr; require root or overflow (65534) ownership
+            // since root is mapped to overflow UID inside user namespaces.
+            if canonical.starts_with("/usr") && meta.uid() != 0 && meta.uid() != 65534 {
                 tracing::warn!(
                     target: "plugin",
                     path = %canonical.display(),
