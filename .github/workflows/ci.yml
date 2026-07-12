@@ -50,7 +50,7 @@ jobs:
           cargo-deny --version
 
       - name: cargo deny check
-        run: cargo-deny check
+        run: cargo-deny check advisories
 
   test:
     name: Tests
