@@ -10,6 +10,14 @@
 
 Trance is a modular, Wayland-native screensaver system for modern Linux desktops, with first-class integration for the COSMIC Desktop environment.
 
+## Showcase
+
+### Ripple
+<video src="assets/ripple.webm" autoplay loop muted width="100%"></video>
+
+### Beams
+<video src="assets/beams.webm" autoplay loop muted width="100%"></video>
+
 ## Packages Produced
 This repository builds official `.deb` (Debian/Ubuntu/Pop!_OS) and `.rpm` (Fedora) packages:
 *   `trance-daemon` (The core background screensaver daemon)
