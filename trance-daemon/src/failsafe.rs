@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::io::Write;
+use libloading::Library;
 
 #[repr(C)]
 pub struct PamHandle {
@@ -36,19 +37,14 @@ pub const PAM_SUCCESS: libc::c_int = 0;
 pub const PAM_PROMPT_ECHO_OFF: libc::c_int = 1;
 pub const PAM_PROMPT_ECHO_ON: libc::c_int = 2;
 
-#[link(name = "pam")]
-unsafe extern "C" {
-    pub fn pam_start(
-        service_name: *const libc::c_char,
-        user: *const libc::c_char,
-        pam_conversation: *const pam_conv,
-        pamh: *mut *mut PamHandle,
-    ) -> libc::c_int;
-
-    pub fn pam_authenticate(pamh: *mut PamHandle, flags: libc::c_int) -> libc::c_int;
-
-    pub fn pam_end(pamh: *mut PamHandle, pam_status: libc::c_int) -> libc::c_int;
-}
+type FnPamStart = unsafe extern "C" fn(
+    *const libc::c_char,
+    *const libc::c_char,
+    *const pam_conv,
+    *mut *mut PamHandle,
+) -> libc::c_int;
+type FnPamAuth = unsafe extern "C" fn(*mut PamHandle, libc::c_int) -> libc::c_int;
+type FnPamEnd = unsafe extern "C" fn(*mut PamHandle, libc::c_int) -> libc::c_int;
 
 unsafe extern "C" fn simple_pam_conv(
     num_msg: libc::c_int,
@@ -88,6 +84,23 @@ unsafe extern "C" fn simple_pam_conv(
 }
 
 fn authenticate(user: &str, password: &str) -> bool {
+    let lib = match unsafe { Library::new("libpam.so.1").or_else(|_| Library::new("libpam.so")) } {
+        Ok(l) => l,
+        Err(_) => return false,
+    };
+
+    let pam_start: libloading::Symbol<FnPamStart> = match unsafe { lib.get(b"pam_start\0") } {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+    let pam_authenticate: libloading::Symbol<FnPamAuth> = match unsafe { lib.get(b"pam_authenticate\0") } {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+    let pam_end: libloading::Symbol<FnPamEnd> = match unsafe { lib.get(b"pam_end\0") } {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
     let pam_services = [
         "trance",
         "system-auth",

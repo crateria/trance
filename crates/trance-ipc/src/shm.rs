@@ -180,11 +180,15 @@ impl SharedMemory {
         &self.name
     }
 
+    /// # Safety
+    /// Caller must ensure shared memory region is validly mapped and non-null.
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn header_mut(&self) -> &mut SharedMemoryHeader {
         unsafe { &mut *(self.ptr as *mut SharedMemoryHeader) }
     }
 
+    /// # Safety
+    /// Caller must ensure shared memory cells buffer is valid for `cols * rows` elements.
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn cells_mut(&self) -> &mut [FfiTerminalCell] {
         let header = unsafe { self.header_mut() };
