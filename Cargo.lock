@@ -5757,7 +5757,7 @@ dependencies = [
 
 [[package]]
 name = "trance-dbus"
-version = "0.3.61"
+version = "0.3.62"
 dependencies = [
  "tracing",
  "zbus",
@@ -5765,7 +5765,7 @@ dependencies = [
 
 [[package]]
 name = "trance-ipc"
-version = "0.3.63"
+version = "0.3.64"
 dependencies = [
  "libc",
  "tracing",
@@ -5799,7 +5799,7 @@ dependencies = [
 
 [[package]]
 name = "trance-tui"
-version = "0.3.62"
+version = "0.3.63"
 dependencies = [
  "anyhow",
  "crossterm",
