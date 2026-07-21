@@ -235,16 +235,9 @@ impl SessionState {
 
         let inset_x = native_w.saturating_sub(configured_w) / 2;
         let inset_y = native_h.saturating_sub(configured_h) / 2;
-        if inset_x > 0 || inset_y > 0 {
-            layer_surface.set_margin(
-                -(inset_y as i32),
-                -(inset_x as i32),
-                -(inset_y as i32),
-                -(inset_x as i32),
-            );
-        } else {
-            layer_surface.set_margin(0, 0, 0, 0);
-        }
+        let m_y = if inset_y > 0 { -(inset_y as i32) } else { 0 };
+        let m_x = if inset_x > 0 { -(inset_x as i32) } else { 0 };
+        layer_surface.set_margin(m_y, m_x, m_y, m_x);
         surface.commit();
     }
 }

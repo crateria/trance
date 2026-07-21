@@ -50,9 +50,15 @@ impl CellRenderer {
         self.render_content_viewport_into(grid, cols, 0, 0, cols, rows, scanlines, &mut content);
         let offset_x = width.saturating_sub(content_w) as usize / 2;
         let offset_y = height.saturating_sub(content_h) as usize / 2;
+        let needed = (width as usize)
+            .checked_mul(height as usize)
+            .and_then(|p| p.checked_mul(4))
+            .unwrap_or(0);
+        let mut framed = vec![0u8; needed];
         letterbox_into(
-            &content, content_w, content_h, width, height, offset_x, offset_y,
-        )
+            &content, content_w, content_h, width, height, offset_x, offset_y, &mut framed,
+        );
+        framed
     }
 }
 
