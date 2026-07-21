@@ -5776,7 +5776,7 @@ dependencies = [
 
 [[package]]
 name = "trance-cli"
-version = "0.3.63"
+version = "0.3.64"
 dependencies = [
  "anyhow",
  "libc",
@@ -5788,7 +5788,7 @@ dependencies = [
 
 [[package]]
 name = "trance-daemon"
-version = "0.3.64"
+version = "0.3.65"
 dependencies = [
  "anyhow",
  "futures-lite",
@@ -5833,7 +5833,7 @@ version = "0.3.61"
 
 [[package]]
 name = "trance-runner"
-version = "0.3.68"
+version = "0.3.69"
 dependencies = [
  "bytemuck",
  "crossterm",
@@ -5854,7 +5854,7 @@ dependencies = [
 
 [[package]]
 name = "trance-tui"
-version = "0.3.63"
+version = "0.3.64"
 dependencies = [
  "anyhow",
  "crossterm",

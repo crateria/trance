@@ -56,7 +56,14 @@ impl CellRenderer {
             .unwrap_or(0);
         let mut framed = vec![0u8; needed];
         letterbox_into(
-            &content, content_w, content_h, width, height, offset_x, offset_y, &mut framed,
+            &content,
+            content_w,
+            content_h,
+            width,
+            height,
+            offset_x,
+            offset_y,
+            &mut framed,
         );
         framed
     }
