@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 use libloading::Library;
-use std::io::Write;
 
 #[repr(C)]
 pub struct PamHandle {
