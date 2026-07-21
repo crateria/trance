@@ -7,6 +7,7 @@
 //! mirror, primary-only, span) are handled in the frame loop submodule.
 
 mod frame_loop;
+mod ipc_init;
 mod ipc_session;
 mod layout;
 mod overlays;

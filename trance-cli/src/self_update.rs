@@ -1,115 +1,19 @@
 // SPDX-License-Identifier: MIT
 
 //! Check whether a newer *system package* is available.
-//!
-//! Detection order matters: many Fedora systems also ship `apt-cache` for
-//! foreign tooling. Prefer whatever package manager **actually installed**
-//! `trance`, not whichever tool happens to be on PATH.
 
 use std::process::Command;
-
 use anyhow::Result;
 
+use super::self_update_backend::{Backend, detect_backend, stdout_trim};
+
 const PKG: &str = "trance";
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Backend {
-    Apt,
-    Dnf,
-}
-
-fn command_ok(cmd: &str, args: &[&str]) -> bool {
-    Command::new(cmd)
-        .args(args)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
-}
-
-fn stdout_trim(cmd: &str, args: &[&str]) -> Option<String> {
-    let output = Command::new(cmd).args(args).output().ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if text.is_empty() { None } else { Some(text) }
-}
-
-/// How was trance installed on this machine?
-fn detect_backend() -> Option<Backend> {
-    // 1) What actually owns the package?
-    if command_ok("rpm", &["-q", PKG]) {
-        return Some(Backend::Dnf);
-    }
-    if command_ok("dpkg-query", &["-W", "-f=${Status}", PKG]) || command_ok("dpkg", &["-s", PKG]) {
-        // Confirm "installed" status when possible.
-        if let Some(status) = stdout_trim("dpkg-query", &["-W", "-f=${Status}", PKG]) {
-            if status.contains("install ok installed") {
-                return Some(Backend::Apt);
-            }
-        } else {
-            return Some(Backend::Apt);
-        }
-    }
-
-    // 2) OS family when the package name is not registered yet.
-    if let Ok(os) = std::fs::read_to_string("/etc/os-release") {
-        let id = os
-            .lines()
-            .find_map(|l| l.strip_prefix("ID="))
-            .unwrap_or("")
-            .trim_matches('"');
-        let like = os
-            .lines()
-            .find_map(|l| l.strip_prefix("ID_LIKE="))
-            .unwrap_or("")
-            .trim_matches('"');
-        if (id == "fedora"
-            || id == "rhel"
-            || id == "centos"
-            || id == "rocky"
-            || id == "almalinux"
-            || like
-                .split_whitespace()
-                .any(|t| matches!(t, "fedora" | "rhel" | "centos")))
-            && (which("dnf") || which("rpm"))
-        {
-            return Some(Backend::Dnf);
-        }
-        if (id == "debian"
-            || id == "ubuntu"
-            || id == "pop"
-            || like
-                .split_whitespace()
-                .any(|t| matches!(t, "debian" | "ubuntu")))
-            && (which("apt-cache") || which("apt"))
-        {
-            return Some(Backend::Apt);
-        }
-    }
-
-    // 3) Last resort: PATH (dnf before apt — apt-cache often exists on Fedora).
-    if which("dnf") {
-        return Some(Backend::Dnf);
-    }
-    if which("apt-cache") {
-        return Some(Backend::Apt);
-    }
-    None
-}
-
-fn which(cmd: &str) -> bool {
-    std::env::var_os("PATH")
-        .map(|p| std::env::split_paths(&p).any(|dir| dir.join(cmd).is_file()))
-        .unwrap_or(false)
-}
 
 fn rpm_installed_version(pkg: &str) -> Option<String> {
     stdout_trim("rpm", &["-q", pkg, "--qf", "%{VERSION}-%{RELEASE}"])
 }
 
 fn dnf_available_version(pkg: &str) -> Option<String> {
-    // dnf5-friendly; refreshes metadata when needed.
     stdout_trim(
         "dnf",
         &[
@@ -122,17 +26,15 @@ fn dnf_available_version(pkg: &str) -> Option<String> {
         ],
     )
     .or_else(|| {
-        // Older dnf / no network: parse list output.
         let out = Command::new("dnf")
             .args(["list", "--available", pkg])
             .output()
             .ok()?;
         let text = String::from_utf8_lossy(&out.stdout);
-        parse_dnf_list_version(&text, /*available_section*/ true)
+        parse_dnf_list_version(&text, true)
     })
 }
 
-/// Parse `dnf list` lines like: `trance.x86_64 0.3.33-1 crateria`
 fn parse_dnf_list_version(text: &str, want_available: bool) -> Option<String> {
     let mut section = "";
     let mut last = None;
@@ -238,7 +140,6 @@ fn handle_apt_update() -> Result<()> {
             }
         }
         None => {
-            // Fall back to dpkg version only.
             if let Some(inst) = stdout_trim("dpkg-query", &["-W", "-f=${Version}", PKG]) {
                 println!(" [✔] Installed version: {inst}");
                 println!(" [!] Could not read APT candidate (is the crateria repo configured?).");
@@ -253,7 +154,6 @@ fn handle_apt_update() -> Result<()> {
     Ok(())
 }
 
-/// Compare RPM-style `0.3.33-1` loosely (ignore arch suffix noise).
 fn versions_equalish(a: &str, b: &str) -> bool {
     let norm = |s: &str| {
         s.trim()
@@ -279,33 +179,5 @@ pub fn handle_self_update() -> Result<()> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parse_dnf5_list_available() {
-        let text = "\
-Installed packages
-trance.x86_64 0.3.32-1 crateria
-
-Available packages
-trance.x86_64 0.3.29-1 crateria
-trance.x86_64 0.3.33-1 crateria
-";
-        assert_eq!(
-            parse_dnf_list_version(text, true).as_deref(),
-            Some("0.3.33-1")
-        );
-        assert_eq!(
-            parse_dnf_list_version(text, false).as_deref(),
-            Some("0.3.32-1")
-        );
-    }
-
-    #[test]
-    fn versions_equalish_ignores_arch() {
-        assert!(versions_equalish("0.3.33-1", "0.3.33-1"));
-        assert!(versions_equalish("0.3.33-1.x86_64", "0.3.33-1"));
-        assert!(!versions_equalish("0.3.32-1", "0.3.33-1"));
-    }
-}
+#[path = "self_update_tests.rs"]
+mod tests;

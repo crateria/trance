@@ -1,0 +1,150 @@
+// SPDX-License-Identifier: MIT
+
+use std::fs;
+use std::os::unix::net::{UnixListener, UnixStream};
+use std::path::PathBuf;
+use std::process::{Child, Command};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::time::Duration;
+use trance_ipc::{IpcCommand, IpcResponse, SHM_MAGIC, SharedMemory, compute_shm_size};
+
+static SESSION_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+pub struct SessionInitResult {
+    pub child: Child,
+    pub socket: UnixStream,
+    pub shm: SharedMemory,
+    pub socket_path: PathBuf,
+}
+
+pub fn initialize_ipc_session(
+    saver_name: &str,
+    cols: usize,
+    rows: usize,
+    gpu_enabled: bool,
+    render_scale: f32,
+    expected_stop: Arc<AtomicBool>,
+) -> Result<SessionInitResult, String> {
+    let session_idx = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let rand_val = std::process::id();
+    let socket_path = std::env::temp_dir().join(format!("trance-uds-{}-{}.sock", rand_val, session_idx));
+    if socket_path.exists() {
+        let _ = fs::remove_file(&socket_path);
+    }
+    let listener = UnixListener::bind(&socket_path)
+        .map_err(|e| format!("failed to bind UDS listener: {}", e))?;
+    listener
+        .set_nonblocking(true)
+        .map_err(|e| format!("failed to set UDS listener nonblocking: {}", e))?;
+
+    let shm_name = format!("/trance-shm-{}-{}", rand_val, session_idx);
+    let shm_size = compute_shm_size(cols, rows);
+    let shm = SharedMemory::create(&shm_name, shm_size)?;
+
+    unsafe {
+        let header = shm.header_mut();
+        header.magic = SHM_MAGIC;
+        header.cols = cols as u32;
+        header.rows = rows as u32;
+        header.frame_counter = 0;
+    }
+
+    let current_exe = std::env::current_exe()
+        .map_err(|e| format!("failed to get current exe path: {}", e))?;
+
+    let gpu_str = gpu_enabled.to_string();
+    let scale_str = format!("{:.6}", render_scale);
+
+    let child = Command::new(current_exe)
+        .arg("run-ipc-runner")
+        .arg(saver_name)
+        .arg(socket_path.to_str().ok_or("invalid socket path")?)
+        .arg(&shm_name)
+        .arg(cols.to_string())
+        .arg(rows.to_string())
+        .arg(&gpu_str)
+        .arg(&scale_str)
+        .spawn()
+        .map_err(|e| format!("failed to spawn runner process: {}", e))?;
+
+    let child_pid = child.id();
+
+    std::thread::spawn(move || {
+        let mut status: libc::c_int = 0;
+        loop {
+            let res = unsafe { libc::waitpid(child_pid as libc::pid_t, &mut status, 0) };
+            if res < 0 {
+                let err = std::io::Error::last_os_error();
+                if err.raw_os_error() == Some(libc::EINTR) {
+                    continue;
+                }
+                break;
+            }
+            break;
+        }
+
+        if expected_stop.load(Ordering::Relaxed) {
+            return;
+        }
+
+        let exited_cleanly = libc::WIFEXITED(status) && libc::WEXITSTATUS(status) == 0;
+
+        if !exited_cleanly {
+            tracing::error!(
+                "Watchdog: screensaver runner (pid {}) exited unexpectedly",
+                child_pid
+            );
+            if let Err(e) = crate::failsafe::spawn_failsafe_locker() {
+                tracing::error!("Watchdog: failed to spawn failsafe locker: {e}");
+            }
+        }
+    });
+
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(5);
+    let socket = loop {
+        match listener.accept() {
+            Ok((stream, _)) => break stream,
+            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                if start.elapsed() > timeout {
+                    return Err("timeout waiting for runner process connection".into());
+                }
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            Err(e) => return Err(format!("UDS accept error: {}", e)),
+        }
+    };
+
+    socket
+        .set_nonblocking(false)
+        .map_err(|e| format!("failed to set blocking on runner stream: {}", e))?;
+
+    let mut socket = socket;
+
+    match IpcResponse::read_from(&mut socket) {
+        Ok(IpcResponse::Ready) => {}
+        Ok(resp) => return Err(format!("unexpected connection message: {:?}", resp)),
+        Err(e) => return Err(format!("failed to read connection message: {}", e)),
+    }
+
+    IpcCommand::Init {
+        cols: cols as u32,
+        rows: rows as u32,
+    }
+    .write_to(&mut socket)
+    .map_err(|e| format!("failed to send Init: {}", e))?;
+
+    match IpcResponse::read_from(&mut socket) {
+        Ok(IpcResponse::Ack) => {}
+        Ok(resp) => return Err(format!("unexpected response to Init: {:?}", resp)),
+        Err(e) => return Err(format!("failed to read Init Ack: {}", e)),
+    }
+
+    Ok(SessionInitResult {
+        child,
+        socket,
+        shm,
+        socket_path,
+    })
+}

@@ -5723,7 +5723,7 @@ dependencies = [
 
 [[package]]
 name = "trance-cli"
-version = "0.3.61"
+version = "0.3.62"
 dependencies = [
  "anyhow",
  "libc",
@@ -5735,7 +5735,7 @@ dependencies = [
 
 [[package]]
 name = "trance-daemon"
-version = "0.3.62"
+version = "0.3.63"
 dependencies = [
  "anyhow",
  "futures-lite",
@@ -5765,7 +5765,7 @@ dependencies = [
 
 [[package]]
 name = "trance-ipc"
-version = "0.3.62"
+version = "0.3.63"
 dependencies = [
  "libc",
  "tracing",
@@ -5778,7 +5778,7 @@ version = "0.3.61"
 
 [[package]]
 name = "trance-runner"
-version = "0.3.67"
+version = "0.3.68"
 dependencies = [
  "bytemuck",
  "crossterm",
@@ -5799,7 +5799,7 @@ dependencies = [
 
 [[package]]
 name = "trance-tui"
-version = "0.3.61"
+version = "0.3.62"
 dependencies = [
  "anyhow",
  "crossterm",
@@ -6221,7 +6221,7 @@ dependencies = [
 
 [[package]]
 name = "wayland-present"
-version = "0.3.61"
+version = "0.3.62"
 dependencies = [
  "libc",
  "tracing",

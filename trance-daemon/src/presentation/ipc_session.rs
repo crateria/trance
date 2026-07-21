@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: MIT
 
 use std::fs;
-use std::os::unix::net::{UnixListener, UnixStream};
+use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
-use std::process::{Child, Command};
+use std::process::Child;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use trance_api::TerminalCell;
-use trance_ipc::{IpcCommand, IpcResponse, SHM_MAGIC, SharedMemory, compute_shm_size};
+use trance_ipc::{IpcCommand, IpcResponse, SharedMemory};
 use trance_runner::cell_renderer::CellRenderer;
 use trance_runner::launcher::LaunchMode;
 use trance_upscaler::{FilterMode, FrameUpscaler, resolve_render_scale};
+
+use super::ipc_init::initialize_ipc_session;
 
 pub struct IpcPluginSession {
     saver_name: String,
@@ -88,128 +90,20 @@ impl IpcPluginSession {
 
     pub fn init(&mut self, cols: usize, rows: usize) -> Result<(), String> {
         self.grid = vec![TerminalCell::default(); cols * rows];
+        let init_res = initialize_ipc_session(
+            &self.saver_name,
+            cols,
+            rows,
+            self.gpu_enabled,
+            self.render_scale,
+            self.expected_stop.clone(),
+        )?;
 
-        let rand_val = std::process::id();
-        let socket_path = std::env::temp_dir().join(format!("trance-uds-{}.sock", rand_val));
-        if socket_path.exists() {
-            let _ = fs::remove_file(&socket_path);
-        }
-        let listener = UnixListener::bind(&socket_path)
-            .map_err(|e| format!("failed to bind UDS listener: {}", e))?;
-        listener
-            .set_nonblocking(true)
-            .map_err(|e| format!("failed to set UDS listener nonblocking: {}", e))?;
+        self.child = Some(init_res.child);
+        self.socket = Some(init_res.socket);
+        self.shm = Some(init_res.shm);
+        self.socket_path = Some(init_res.socket_path);
 
-        self.socket_path = Some(socket_path.clone());
-
-        let shm_name = format!("/trance-shm-{}", rand_val);
-        let shm_size = compute_shm_size(cols, rows);
-        let shm = SharedMemory::create(&shm_name, shm_size)?;
-
-        unsafe {
-            let header = shm.header_mut();
-            header.magic = SHM_MAGIC;
-            header.cols = cols as u32;
-            header.rows = rows as u32;
-            header.frame_counter = 0;
-        }
-
-        self.shm = Some(shm);
-
-        let current_exe = std::env::current_exe()
-            .map_err(|e| format!("failed to get current exe path: {}", e))?;
-
-        let gpu_str = self.gpu_enabled.to_string();
-        let scale_str = format!("{:.6}", self.render_scale);
-
-        let child = Command::new(current_exe)
-            .arg("run-ipc-runner")
-            .arg(&self.saver_name)
-            .arg(socket_path.to_str().ok_or("invalid socket path")?)
-            .arg(&shm_name)
-            .arg(cols.to_string())
-            .arg(rows.to_string())
-            .arg(&gpu_str)
-            .arg(&scale_str)
-            .spawn()
-            .map_err(|e| format!("failed to spawn runner process: {}", e))?;
-
-        let child_pid = child.id();
-        self.child = Some(child);
-
-        let expected_stop = self.expected_stop.clone();
-        std::thread::spawn(move || {
-            let mut status: libc::c_int = 0;
-            loop {
-                let res = unsafe { libc::waitpid(child_pid as libc::pid_t, &mut status, 0) };
-                if res < 0 {
-                    let err = std::io::Error::last_os_error();
-                    if err.raw_os_error() == Some(libc::EINTR) {
-                        continue;
-                    }
-                    break;
-                }
-                break;
-            }
-
-            if expected_stop.load(Ordering::Relaxed) {
-                return;
-            }
-
-            let exited_cleanly = libc::WIFEXITED(status) && libc::WEXITSTATUS(status) == 0;
-
-            if !exited_cleanly {
-                tracing::error!(
-                    "Watchdog: screensaver runner (pid {}) exited unexpectedly",
-                    child_pid
-                );
-                if let Err(e) = crate::failsafe::spawn_failsafe_locker() {
-                    tracing::error!("Watchdog: failed to spawn failsafe locker: {e}");
-                }
-            }
-        });
-
-        let start = std::time::Instant::now();
-        let timeout = Duration::from_secs(5);
-        let socket = loop {
-            match listener.accept() {
-                Ok((stream, _)) => break stream,
-                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                    if start.elapsed() > timeout {
-                        return Err("timeout waiting for runner process connection".into());
-                    }
-                    std::thread::sleep(Duration::from_millis(10));
-                }
-                Err(e) => return Err(format!("UDS accept error: {}", e)),
-            }
-        };
-
-        socket
-            .set_nonblocking(false)
-            .map_err(|e| format!("failed to set blocking on runner stream: {}", e))?;
-
-        let mut socket = socket;
-
-        match IpcResponse::read_from(&mut socket) {
-            Ok(IpcResponse::Ready) => {}
-            Ok(resp) => return Err(format!("unexpected connection message: {:?}", resp)),
-            Err(e) => return Err(format!("failed to read connection message: {}", e)),
-        }
-
-        IpcCommand::Init {
-            cols: cols as u32,
-            rows: rows as u32,
-        }
-        .write_to(&mut socket)
-        .map_err(|e| format!("failed to send Init: {}", e))?;
-
-        match IpcResponse::read_from(&mut socket) {
-            Ok(IpcResponse::Ack) => {}
-            Ok(resp) => return Err(format!("unexpected response to Init: {:?}", resp)),
-            Err(e) => return Err(format!("failed to read Init Ack: {}", e)),
-        }
-
-        self.socket = Some(socket);
         Ok(())
     }
 
