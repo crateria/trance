@@ -94,7 +94,9 @@ fn handle_dnf_update() -> Result<()> {
         (None, None) => {
             println!(" [!] Could not find the 'trance' package via RPM/DNF.");
             println!("     -> Register the repo, then: sudo dnf install trance");
-            println!("     -> curl -fsSL https://idlescreen.github.io/packages/rpm/crateria.repo \\");
+            println!(
+                "     -> curl -fsSL https://idlescreen.github.io/packages/rpm/crateria.repo \\"
+            );
             println!("          | sudo tee /etc/yum.repos.d/crateria.repo");
         }
     }
