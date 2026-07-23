@@ -1,55 +1,28 @@
-# AGENT.md — Project Genesis & Build Rules (trance)
+# AGENT.md — Crateria hardening contract
 
-This repository operates under strict multi-agent governance and first-principles Rust development protocols.
+Enforce on every change in this repository.
 
----
+## Rust and license
 
-## Multi-Agent Triad Definition
+- Strict Rust from first principles. Prefer `std` before crates.
+- License: **Apache-2.0** only for this project and new code.
+- Vetted dependencies only; no `unsafe` without a short safety comment.
 
-1. **Strategic Arbiter**:
-   - Owns system architecture, module boundaries, phase gates, and RFC/protocol compliance.
-   - Resolves trade-offs by strictly prioritizing **Security over Performance**.
-   - Enforces the hard **<= 250 line limit per .rs file** and logical function boundary splitting.
+## Constraints
 
-2. **Security Agent**:
-   - Hunts memory safety hazards, input sanitization gaps, path traversal bugs, and buffer boundaries.
-   - Operates under the **Zero-Complaint Rule**: must provide full replacement code for any identified vulnerability or explicitly output `PASS: SECURITY AUDIT CLEAN`.
+- Max **250 lines** per `.rs` file (split at functional boundaries).
+- **Zero** `.unwrap()` or `.expect()` in production (non-test) code.
+  Tests may use `unwrap`/`expect` only when the failure message is clear.
+- Fallible APIs use `Result` / `Option` with explicit error types.
 
-3. **Performance & Devil's Advocate Agent**:
-   - Enforces zero-cost abstractions, minimal heap allocations, and lock-free async concurrency.
-   - Operates under the **Zero-Complaint Rule**: must provide full replacement code for any identified bottleneck or explicitly output `PASS: PERFORMANCE AUDIT CLEAN`.
+## Testing
 
----
+- Target about **3:1** test lines to production lines where practical.
+- Protocol, parsing, path safety, and package index logic must have
+  **proptest** (or equivalent property) tests.
+- Prefer deterministic unit tests; integration tests for CLI boundaries.
 
-## Core Standing Build Rules
+## Git edges
 
-1. **First-Principles Rust Implementation**:
-   - Code strictly from first principles in Rust, leveraging the strong type system to eliminate runtime failure states.
-   - All code is licensed under the **Apache 2.0 License** for explicit patent protection.
-
-2. **RFC & Protocol Compliance**:
-   - Guarantee strict RFC compliance across all HTTP, DBus, and IPC protocols.
-
-3. **File Line Cap & Domain Naming**:
-   - **Hard 250-line limit per .rs file**. Split files exclusively at logical function boundaries.
-   - Mandate explicit, domain-specific module, file, and symbol naming.
-
-4. **Structured Logging & Observability**:
-   - Embed structured logging (`tracing`) across all critical execution paths, error boundaries, and state transitions.
-
-5. **Zero-Trust Dependency Rule**:
-   - Default strictly to the Rust Standard Library (`std`) first.
-   - Restrict third-party crates to highly vetted, industry-standard libraries.
-
-6. **No `.unwrap()` or `.expect()` in Production Code**:
-   - Strictly forbid the use of `.unwrap()` and `.expect()` outside of test modules (`#[cfg(test)]`). All production error cases must use proper `Result` propagation and pattern matching.
-
-7. **3:1 Test-to-Code Ratio Goal**:
-   - Pursue a **3:1 test-to-code ratio goal**—not a hard requirement, but a forcing function for defect discovery, regression shielding, and decoupled architecture.
-   - Explicitly cover internal helper functions, public logic, and user interfaces concurrently as code is built.
-
-8. **Continuous State Tracking**:
-   - Every change made during any phase must be immediately committed and pushed to GitHub.
-
-9. **Zero Dead Code**:
-   - Actively eliminate unused imports, dead functions, and vestigial code paths.
+- Default branch: **`master`**.
+- After each hardening stage barrier: declarative commit message and push to `origin master`.
