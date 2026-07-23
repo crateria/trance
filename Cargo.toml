@@ -10,7 +10,6 @@ members = [
     "trance-runner",
     "trance-daemon",
     "trance-cli",
-    "trance-applet",
     "trance-plugins-all",
     "trance-tui",
 ]

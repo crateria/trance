@@ -103,3 +103,11 @@ Apache-2.0. See [LICENSE](LICENSE).
 Plugins are also published as standalone repositories:
 
 https://github.com/orgs/idlescreen/repositories?q=plugin-
+
+---
+
+### COSMIC applet (optional)
+
+Panel integration for System76 COSMIC is maintained separately:
+
+https://github.com/idlescreen/idlescreen-applet
