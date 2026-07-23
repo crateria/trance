@@ -1,17 +1,19 @@
 # IdleScreen
 
-[![CI](https://github.com/idlescreen/idlescreen/actions/workflows/ci.yml/badge.svg)](https://github.com/idlescreen/idlescreen/actions/workflows/ci.yml)
-[![Security](https://img.shields.io/badge/security-private%20reporting-blue)](https://github.com/idlescreen/idlescreen/security/advisories)
+Core repository: [`idle-core`](https://github.com/idlescreen/idle-core).
+
+[![CI](https://github.com/idlescreen/idle-core/actions/workflows/ci.yml/badge.svg)](https://github.com/idlescreen/idle-core/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/badge/security-private%20reporting-blue)](https://github.com/idlescreen/idle-core/security/advisories)
 
 Modular Wayland-native screensaver and ambient display daemon for Linux, written in Rust.
 
 | | |
 |---|---|
-| Brand | [idlescreen/brand](https://github.com/idlescreen/brand) |
-| Packages | [idlescreen.github.io/packages](https://idlescreen.github.io/packages/) |
+| Brand | [idlescreen/brand](https://github.com/idlescreen/idle-brand) |
+| Packages | [idlescreen.github.io/idle-packages](https://idlescreen.github.io/idle-packages/) |
 | Org | [idlescreen](https://github.com/idlescreen) |
-| Plugins | [official plugins](https://github.com/orgs/idlescreen/repositories?q=plugin-) |
-| Optional applet | [idlescreen/idlescreen-applet](https://github.com/idlescreen/idlescreen-applet) |
+| Plugins | [official plugins](https://github.com/orgs/idlescreen/repositories?q=saver-) |
+| Optional applet | [idlescreen/idlescreen-applet](https://github.com/idlescreen/idle-core-applet) |
 
 ## Install (native packages)
 
@@ -19,9 +21,9 @@ Modular Wayland-native screensaver and ambient display daemon for Linux, written
 
 ```bash
 sudo mkdir -p /etc/apt/keyrings
-sudo curl -fsSL https://idlescreen.github.io/packages/apt/crateria-keyring.gpg \
+sudo curl -fsSL https://idlescreen.github.io/idle-packages/apt/crateria-keyring.gpg \
   -o /etc/apt/keyrings/idlescreen.gpg
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/idlescreen.gpg] https://idlescreen.github.io/packages/apt stable main" \
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/idlescreen.gpg] https://idlescreen.github.io/idle-packages/apt stable main" \
   | sudo tee /etc/apt/sources.list.d/idlescreen.list
 sudo apt update && sudo apt install trance
 ```
@@ -29,7 +31,7 @@ sudo apt update && sudo apt install trance
 ### Fedora
 
 ```bash
-sudo curl -fsSL https://idlescreen.github.io/packages/rpm/crateria.repo \
+sudo curl -fsSL https://idlescreen.github.io/idle-packages/rpm/crateria.repo \
   -o /etc/yum.repos.d/idlescreen.repo
 sudo dnf install trance
 ```
@@ -40,13 +42,13 @@ Shipped package and binary names remain `trance` / `trance-*` for install and
 API stability.
 
 Optional packages: `trance-plugins-all`, `trance-cli`, `trance-tui`. COSMIC panel
-users can install [idlescreen-applet](https://github.com/idlescreen/idlescreen-applet)
+users can install [idlescreen-applet](https://github.com/idlescreen/idle-core-applet)
 separately.
 
 ## Build from source
 
 ```bash
-git clone https://github.com/idlescreen/idlescreen.git
+git clone https://github.com/idlescreen/idle-core.git
 cd idlescreen
 cargo build --release -p trance-daemon -p trance-cli -p trance-tui
 ```
@@ -69,7 +71,7 @@ containerized tooling. Desktop install prefers native packages.
 1. Tag `vX.Y.Z` on `master`.
 2. The Release workflow builds `.deb` / `.rpm` assets and publishes a GitHub Release.
 3. When `IDLESCREEN_PACKAGES_DISPATCH_TOKEN` is set, the workflow sends
-   `repository_dispatch` `new_release` to [idlescreen/packages](https://github.com/idlescreen/packages)
+   `repository_dispatch` `new_release` to [idlescreen/packages](https://github.com/idlescreen/idle-packages)
    for signing and Pages index update.
 
 ## Environment configuration

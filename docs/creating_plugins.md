@@ -27,7 +27,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Link to the trance-api dependency
-trance-api = { git = "https://github.com/idlescreen/idlescreen.git", branch = "master" }
+trance-api = { git = "https://github.com/idlescreen/idle-core.git", branch = "master" }
 ```
 
 ---
