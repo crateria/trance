@@ -9,7 +9,7 @@ license = "Apache-2.0"
 bytemuck = { version = "1.21", features = ["derive"] }
 
 [dev-dependencies]
-# Reserved for future doctest-only deps
+proptest = "1"
 
 [[example]]
 name = "minimal_saver"

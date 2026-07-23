@@ -9,6 +9,7 @@ mod font;
 mod geom;
 mod gpu_cells;
 mod gpu_init;
+mod gpu_render_setup;
 mod gpu_render;
 mod pixels;
 

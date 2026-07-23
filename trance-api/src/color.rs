@@ -135,3 +135,63 @@ mod tests {
         assert_eq!(lerp(0.0, 100.0, 0.5), 50.0);
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(256))]
+
+        /// Clamped `lerp` lands on the near endpoint when factor is outside [0, 1],
+        /// and otherwise lies between the endpoints (with float slack).
+        #[test]
+        fn lerp_respects_clamp(a in -1e3f32..1e3, b in -1e3f32..1e3, f in -10f32..10f32) {
+            prop_assume!(a.is_finite() && b.is_finite() && f.is_finite());
+            let v = lerp(a, b, f);
+            let lo = a.min(b);
+            let hi = a.max(b);
+            let slack = 1e-2 * (1.0 + lo.abs().max(hi.abs()));
+            prop_assert!(v + slack >= lo && v <= hi + slack, "lerp({a},{b},{f})={v}");
+        }
+
+        /// Zero total always yields 0.0 percentage.
+        #[test]
+        fn percentage_zero_total_is_zero(used: u64) {
+            prop_assert_eq!(percentage(used, 0), 0.0);
+        }
+
+        /// Percentage is in [0, 100] when used <= total and total > 0.
+        #[test]
+        fn percentage_in_unit_range(total in 1u64..=1_000_000, used in 0u64..=1_000_000) {
+            prop_assume!(used <= total);
+            let p = percentage(used, total);
+            prop_assert!((0.0..=100.0).contains(&p), "p={p}");
+        }
+
+        /// HSL→RGB→HSL preserves lightness well for vivid mid-tones (8-bit RGB
+        /// quantization makes hue/sat brittle at extremes).
+        #[test]
+        fn hsl_rgb_lightness_stable(
+            h in 0.0f32..360.0,
+            s in 0.4f32..=1.0,
+            l in 0.2f32..=0.8,
+        ) {
+            let (r, g, b) = hsl_to_rgb(h, s, l);
+            let (_h2, _s2, l2) = rgb_to_hsl(r, g, b);
+            prop_assert!(
+                (l - l2).abs() <= 0.02,
+                "lightness HSL({h},{s},{l}) -> RGB({r},{g},{b}) -> L={l2}"
+            );
+        }
+
+        /// Pure greys keep equal RGB channels for any lightness.
+        #[test]
+        fn greyscale_equal_channels(l in 0.0f32..=1.0) {
+            let (r, g, b) = hsl_to_rgb(0.0, 0.0, l);
+            prop_assert_eq!(r, g);
+            prop_assert_eq!(g, b);
+        }
+    }
+}

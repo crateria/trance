@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 
 use std::sync::atomic::AtomicBool;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use super::ipc_session::IpcPluginSession;
 use trance_api::{clear_caption, clear_primary_bounds};
-use trance_upscaler::{simulation_tick_hz, target_fps};
 use wayland_present::{OutputLayout, OverlayPresenter};
 
-use super::frame_loop::{ActiveSession, run_frame_loop};
+use super::frame_loop::ActiveSession;
+use super::frame_pacing::{FramePacing, log_run_startup};
 use super::layout::{
     install_primary_bounds_callback, primary_bounds_in_grid, span_simulation_grid, virtual_desktop,
 };
-use super::refresh::{presentation_refresh_hz, wait_for_output_layouts};
+use super::refresh::wait_for_output_layouts;
 use crate::presentation::PresentationOptions;
 
 #[tracing::instrument(skip_all, fields(saver_name = %saver_name))]
@@ -41,41 +41,7 @@ pub fn run_plugin_loop(
     }
     log_output_layouts(&layouts);
 
-    let mut sessions = Vec::new();
-    if topology.independent_rendering {
-        for layout in &layouts {
-            let mut session = IpcPluginSession::load_with_options(
-                saver_name,
-                &options.launch_mode,
-                Some(options.gpu_enabled),
-                options.render_scale,
-            )?;
-            let (cols, rows) = session.grid_for_pixels(layout.width, layout.height);
-            session.init(cols, rows)?;
-            sessions.push(ActiveSession {
-                output_id: layout.id,
-                session,
-                cols,
-                rows,
-            });
-        }
-    } else {
-        let mut session = IpcPluginSession::load_with_options(
-            saver_name,
-            &options.launch_mode,
-            Some(options.gpu_enabled),
-            options.render_scale,
-        )?;
-        let (_min_x, _min_y, total_w, total_h) = virtual_desktop(&layouts);
-        let (virtual_cols, virtual_rows) = span_simulation_grid(&session, total_w, total_h);
-        session.init(virtual_cols, virtual_rows)?;
-        sessions.push(ActiveSession {
-            output_id: 0,
-            session,
-            cols: virtual_cols,
-            rows: virtual_rows,
-        });
-    }
+    let mut sessions = build_sessions(saver_name, &layouts, &topology, &options)?;
 
     let primary = layouts
         .iter()
@@ -131,6 +97,50 @@ pub fn run_plugin_loop(
     result
 }
 
+fn build_sessions(
+    saver_name: &str,
+    layouts: &[OutputLayout],
+    topology: &super::topology::DisplayTopologyMap,
+    options: &PresentationOptions,
+) -> Result<Vec<ActiveSession>, String> {
+    let mut sessions = Vec::new();
+    if topology.independent_rendering {
+        for layout in layouts {
+            let mut session = IpcPluginSession::load_with_options(
+                saver_name,
+                &options.launch_mode,
+                Some(options.gpu_enabled),
+                options.render_scale,
+            )?;
+            let (cols, rows) = session.grid_for_pixels(layout.width, layout.height);
+            session.init(cols, rows)?;
+            sessions.push(ActiveSession {
+                output_id: layout.id,
+                session,
+                cols,
+                rows,
+            });
+        }
+    } else {
+        let mut session = IpcPluginSession::load_with_options(
+            saver_name,
+            &options.launch_mode,
+            Some(options.gpu_enabled),
+            options.render_scale,
+        )?;
+        let (_min_x, _min_y, total_w, total_h) = virtual_desktop(layouts);
+        let (virtual_cols, virtual_rows) = span_simulation_grid(&session, total_w, total_h);
+        session.init(virtual_cols, virtual_rows)?;
+        sessions.push(ActiveSession {
+            output_id: 0,
+            session,
+            cols: virtual_cols,
+            rows: virtual_rows,
+        });
+    }
+    Ok(sessions)
+}
+
 fn log_output_layouts(layouts: &[OutputLayout]) {
     for layout in layouts {
         tracing::info!(
@@ -154,98 +164,4 @@ fn install_layout_callbacks(
     trance_api::publish_primary_bounds(primary_bounds);
     install_primary_bounds_callback(primary_bounds, virtual_cols, virtual_rows);
     let _ = trance_api::IS_SECONDARY_MONITOR_CALLBACK.set(|| false);
-}
-
-struct FramePacing {
-    present_fps: f32,
-    tick_hz: f32,
-    frame_duration: Duration,
-    last_frame: Instant,
-    frame_counter: u64,
-    fps_report: Instant,
-    achieved_fps: f32,
-}
-
-impl FramePacing {
-    fn compute(
-        layouts: &[OutputLayout],
-        primary: OutputLayout,
-        sessions: &mut [ActiveSession],
-    ) -> Self {
-        let present_refresh = presentation_refresh_hz(layouts, primary);
-        let mut present_fps = target_fps(present_refresh);
-        let mut tick_hz = simulation_tick_hz();
-
-        let sys = trance_runner::toolkit::sys_info::get_system_info();
-        if sys.power_status.contains("Battery") {
-            present_fps = present_fps.min(30.0);
-            tick_hz = tick_hz.min(30.0);
-            tracing::info!(
-                "Battery power detected: capping physics simulation and rendering frame rate targets to 30 FPS/Hz"
-            );
-        }
-
-        let frame_duration = Duration::from_secs_f32(1.0 / present_fps);
-        for s in sessions {
-            s.session.set_simulation_rate(tick_hz);
-        }
-        Self {
-            present_fps,
-            tick_hz,
-            frame_duration,
-            last_frame: Instant::now(),
-            frame_counter: 0,
-            fps_report: Instant::now(),
-            achieved_fps: 0.0,
-        }
-    }
-
-    fn run_loop(
-        mut self,
-        presenter: &OverlayPresenter,
-        stop: &AtomicBool,
-        sessions: &mut [ActiveSession],
-        layouts: &[OutputLayout],
-        primary: OutputLayout,
-        independent_rendering: bool,
-        options: PresentationOptions,
-    ) -> Result<(), String> {
-        run_frame_loop(
-            presenter,
-            stop,
-            sessions,
-            layouts,
-            primary,
-            independent_rendering,
-            options,
-            self.present_fps,
-            self.tick_hz,
-            self.frame_duration,
-            &mut self.last_frame,
-            &mut self.frame_counter,
-            &mut self.fps_report,
-            &mut self.achieved_fps,
-        )
-    }
-}
-
-fn log_run_startup(
-    saver_name: &str,
-    layouts: &[OutputLayout],
-    pacing: &FramePacing,
-    session: &IpcPluginSession,
-) {
-    tracing::info!(
-        "running plugin '{}' on {} monitor(s) at {:.0} FPS / {:.0} tick (render scale {:.0}%, GPU: {})",
-        saver_name,
-        layouts.len(),
-        pacing.present_fps,
-        pacing.tick_hz,
-        session.render_scale() * 100.0,
-        if session.using_gpu_upscale() {
-            "yes"
-        } else {
-            "no"
-        }
-    );
 }
