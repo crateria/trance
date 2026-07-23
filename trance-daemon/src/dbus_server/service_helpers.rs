@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use crate::controller::DaemonController;
+use crate::controller::{DaemonCommand, DaemonController};
 use std::sync::Arc;
 use trance_dbus::DaemonStatus;
 
@@ -15,6 +15,20 @@ pub async fn authorize_control(
         header,
     )
     .await
+}
+
+/// Apply a config-mutating command, log failures, and sync status.
+pub fn apply_config_command(
+    controller: &Arc<DaemonController>,
+    command: DaemonCommand,
+    label: &str,
+) -> zbus::fdo::Result<()> {
+    if let Err(error) = controller.apply_command(command) {
+        tracing::error!(target: "trance_daemon::dbus", "{label} failed: {error:?}");
+        return Err(zbus::fdo::Error::Failed(error.to_string()));
+    }
+    sync_config_status(controller);
+    Ok(())
 }
 
 #[tracing::instrument(skip(controller), level = "trace")]

@@ -2644,6 +2644,7 @@ name = "trance-ipc"
 version = "0.3.64"
 dependencies = [
  "libc",
+ "proptest",
  "tracing",
  "trance-api",
 ]

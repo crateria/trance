@@ -3,10 +3,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use trance_dbus::DaemonStatus;
 use zbus::object_server::SignalEmitter;
 use zbus::zvariant::OwnedValue;
 
+use super::service_helpers::{
+    apply_config_command, authorize_control, live_status, sync_config_status,
+};
 use crate::controller::{DaemonCommand, DaemonController};
 
 pub struct TranceService {
@@ -17,27 +19,22 @@ pub struct TranceService {
 #[allow(deprecated)]
 impl TranceService {
     async fn get_status(&self) -> zbus::fdo::Result<HashMap<String, OwnedValue>> {
-        Ok(self.live_status().to_map())
+        Ok(live_status(&self.controller).to_map())
     }
 
     async fn enable(
         &self,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
-        if let Err(error) = self.controller.apply_command(DaemonCommand::Enable) {
-            tracing::error!(target: "trance_daemon::dbus", "Enable failed: {error:?}");
-            return Err(zbus::fdo::Error::Failed(error.to_string()));
-        }
-        self.sync_config_status();
-        Ok(())
+        authorize_control(&self.controller, &header).await?;
+        apply_config_command(&self.controller, DaemonCommand::Enable, "Enable")
     }
 
     async fn disable(
         &self,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
+        authorize_control(&self.controller, &header).await?;
         if let Err(error) = self.controller.apply_command(DaemonCommand::Disable) {
             tracing::error!(target: "trance_daemon::dbus", "Disable failed: {error:?}");
             return Err(zbus::fdo::Error::Failed(error.to_string()));
@@ -46,7 +43,7 @@ impl TranceService {
             .controller
             .command_tx
             .send(DaemonCommand::StopPresentation);
-        self.sync_config_status();
+        sync_config_status(&self.controller);
         Ok(())
     }
 
@@ -55,19 +52,16 @@ impl TranceService {
         minutes: u32,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
-        if let Err(error) = self
-            .controller
-            .apply_command(DaemonCommand::SetTimeout(minutes))
-        {
-            tracing::error!(target: "trance_daemon::dbus", "SetTimeout failed: {error:?}");
-            return Err(zbus::fdo::Error::Failed(error.to_string()));
-        }
+        authorize_control(&self.controller, &header).await?;
+        apply_config_command(
+            &self.controller,
+            DaemonCommand::SetTimeout(minutes),
+            "SetTimeout",
+        )?;
         let _ = self
             .controller
             .command_tx
             .send(DaemonCommand::SetTimeout(minutes));
-        self.sync_config_status();
         Ok(())
     }
 
@@ -76,17 +70,13 @@ impl TranceService {
         name: &str,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
+        authorize_control(&self.controller, &header).await?;
         let saver = (!name.is_empty()).then(|| name.to_string());
-        if let Err(error) = self
-            .controller
-            .apply_command(DaemonCommand::SetSaver(saver))
-        {
-            tracing::error!(target: "trance_daemon::dbus", "SetSaver failed: {error:?}");
-            return Err(zbus::fdo::Error::Failed(error.to_string()));
-        }
-        self.sync_config_status();
-        Ok(())
+        apply_config_command(
+            &self.controller,
+            DaemonCommand::SetSaver(saver),
+            "SetSaver",
+        )
     }
 
     async fn list_savers(&self) -> zbus::fdo::Result<Vec<String>> {
@@ -98,7 +88,7 @@ impl TranceService {
         name: &str,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
+        authorize_control(&self.controller, &header).await?;
         trance_runner::launcher::sanitize_saver_name(name).ok_or_else(|| {
             zbus::fdo::Error::Failed(format!("unknown or invalid screensaver name: {name}"))
         })?;
@@ -120,7 +110,7 @@ impl TranceService {
         &self,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
+        authorize_control(&self.controller, &header).await?;
         let _ = self
             .controller
             .command_tx
@@ -187,7 +177,7 @@ impl TranceService {
         _enabled: bool,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
+        authorize_control(&self.controller, &header).await?;
         tracing::warn!(target: "trance_daemon::deprecation", "set_gpu_enabled called; GPU upscaler removed in 2026");
         Ok(())
     }
@@ -197,16 +187,12 @@ impl TranceService {
         enabled: bool,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
-        if let Err(error) = self
-            .controller
-            .apply_command(DaemonCommand::SetShowFpsOverlay(enabled))
-        {
-            tracing::error!(target: "trance_daemon::dbus", "SetShowFpsOverlay failed: {error:?}");
-            return Err(zbus::fdo::Error::Failed(error.to_string()));
-        }
-        self.sync_config_status();
-        Ok(())
+        authorize_control(&self.controller, &header).await?;
+        apply_config_command(
+            &self.controller,
+            DaemonCommand::SetShowFpsOverlay(enabled),
+            "SetShowFpsOverlay",
+        )
     }
 
     async fn set_render_scale(
@@ -214,16 +200,12 @@ impl TranceService {
         scale: f64,
         #[zbus(header)] header: zbus::message::Header<'_>,
     ) -> zbus::fdo::Result<()> {
-        self.authorize_control(&header).await?;
-        if let Err(error) = self
-            .controller
-            .apply_command(DaemonCommand::SetRenderScale(Some(scale as f32)))
-        {
-            tracing::error!(target: "trance_daemon::dbus", "SetRenderScale failed: {error:?}");
-            return Err(zbus::fdo::Error::Failed(error.to_string()));
-        }
-        self.sync_config_status();
-        Ok(())
+        authorize_control(&self.controller, &header).await?;
+        apply_config_command(
+            &self.controller,
+            DaemonCommand::SetRenderScale(Some(scale as f32)),
+            "SetRenderScale",
+        )
     }
 
     #[zbus(signal)]
@@ -231,16 +213,4 @@ impl TranceService {
         signal_emitter: &SignalEmitter<'_>,
         status: HashMap<String, OwnedValue>,
     ) -> zbus::Result<()>;
-}
-
-impl TranceService {
-    async fn authorize_control(&self, header: &zbus::message::Header<'_>) -> zbus::fdo::Result<()> {
-        super::service_helpers::authorize_control(&self.controller, header).await
-    }
-    fn live_status(&self) -> DaemonStatus {
-        super::service_helpers::live_status(&self.controller)
-    }
-    fn sync_config_status(&self) {
-        super::service_helpers::sync_config_status(&self.controller);
-    }
 }

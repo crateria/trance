@@ -134,18 +134,48 @@ mod tests {
     fn test_parse_custom_layouts_valid() {
         let map = parse_custom_layouts("1:100,200,800,600,2;2:0,0,1920,1080,1");
         assert_eq!(map.len(), 2);
-        let ov1 = map.get(&1).unwrap();
+        let ov1 = map.get(&1).expect("id 1 present");
         assert_eq!(ov1.x, Some(100));
         assert_eq!(ov1.y, Some(200));
         assert_eq!(ov1.w, Some(800));
         assert_eq!(ov1.h, Some(600));
         assert_eq!(ov1.scale, Some(2));
 
-        let ov2 = map.get(&2).unwrap();
+        let ov2 = map.get(&2).expect("id 2 present");
         assert_eq!(ov2.x, Some(0));
         assert_eq!(ov2.y, Some(0));
         assert_eq!(ov2.w, Some(1920));
         assert_eq!(ov2.h, Some(1080));
         assert_eq!(ov2.scale, Some(1));
+    }
+
+    #[test]
+    fn parse_skips_malformed_entries() {
+        let map = parse_custom_layouts("nope;1:10,20;:bad;2;3:1,2,3,4,5,extra");
+        assert_eq!(map.len(), 2);
+        assert_eq!(map.get(&1).map(|o| (o.x, o.y)), Some((Some(10), Some(20))));
+        assert_eq!(map.get(&3).and_then(|o| o.scale), Some(5));
+    }
+
+    #[test]
+    fn parse_partial_coords_leaves_unset() {
+        let map = parse_custom_layouts("7:42");
+        let ov = map.get(&7).expect("id 7");
+        assert_eq!(ov.x, Some(42));
+        assert!(ov.y.is_none());
+        assert!(ov.w.is_none());
+        assert!(ov.h.is_none());
+        assert!(ov.scale.is_none());
+    }
+
+    #[test]
+    fn parse_is_idempotent_for_last_id_wins() {
+        let map = parse_custom_layouts("1:1,2,3,4,1;1:9,8,7,6,5");
+        let ov = map.get(&1).expect("id 1");
+        assert_eq!(ov.x, Some(9));
+        assert_eq!(ov.y, Some(8));
+        assert_eq!(ov.w, Some(7));
+        assert_eq!(ov.h, Some(6));
+        assert_eq!(ov.scale, Some(5));
     }
 }

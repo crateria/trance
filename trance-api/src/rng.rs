@@ -123,3 +123,43 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(128))]
+
+        /// Same seed always yields the same sequence (determinism).
+        #[test]
+        fn same_seed_same_stream(seed: u64, steps in 1usize..64) {
+            let mut a = LcgRng::new(seed);
+            let mut b = LcgRng::new(seed);
+            for _ in 0..steps {
+                prop_assert_eq!(a.next_u64(), b.next_u64());
+            }
+        }
+
+        /// `next_usize(max)` is always in `0..max` when max > 0.
+        #[test]
+        fn next_usize_in_range(seed: u64, max in 1usize..=10_000) {
+            let mut rng = LcgRng::new(seed);
+            for _ in 0..32 {
+                let n = rng.next_usize(max);
+                prop_assert!(n < max, "n={n} max={max}");
+            }
+        }
+
+        /// `next_f32` stays in [0, 1).
+        #[test]
+        fn next_f32_unit_interval(seed: u64) {
+            let mut rng = LcgRng::new(seed);
+            for _ in 0..32 {
+                let f = rng.next_f32();
+                prop_assert!((0.0..1.0).contains(&f), "f={f}");
+            }
+        }
+    }
+}

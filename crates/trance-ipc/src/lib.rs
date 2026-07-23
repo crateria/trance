@@ -3,11 +3,13 @@
 
 //! Shared memory layout and control protocol for out-of-process screensaver execution.
 
+pub mod ffi_cell;
 pub mod protocol;
 pub mod shm;
 
+pub use ffi_cell::{FfiTerminalCell, SHM_MAGIC, SharedMemoryHeader, compute_shm_size};
 pub use protocol::{IpcCommand, IpcResponse};
-pub use shm::{FfiTerminalCell, SHM_MAGIC, SharedMemory, SharedMemoryHeader, compute_shm_size};
+pub use shm::SharedMemory;
 
 #[cfg(test)]
 mod tests {
@@ -27,8 +29,8 @@ mod tests {
 
         for cmd in cmds {
             let mut buf = Vec::new();
-            cmd.write_to(&mut buf).unwrap();
-            let decoded = IpcCommand::read_from(&buf[..]).unwrap();
+            cmd.write_to(&mut buf).expect("encode command");
+            let decoded = IpcCommand::read_from(&buf[..]).expect("decode command");
             assert_eq!(cmd, decoded);
         }
     }
@@ -44,8 +46,8 @@ mod tests {
 
         for resp in resps {
             let mut buf = Vec::new();
-            resp.write_to(&mut buf).unwrap();
-            let decoded = IpcResponse::read_from(&buf[..]).unwrap();
+            resp.write_to(&mut buf).expect("encode response");
+            let decoded = IpcResponse::read_from(&buf[..]).expect("decode response");
             assert_eq!(resp, decoded);
         }
     }
@@ -100,5 +102,77 @@ mod tests {
     fn test_truncated_command_read() {
         let truncated = [0u8, 120]; // Tag 0 requires 8 bytes payload (cols:4, rows:4)
         assert!(IpcCommand::read_from(&truncated[..]).is_err());
+    }
+}
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn arb_command() -> impl Strategy<Value = IpcCommand> {
+        prop_oneof![
+            (any::<u32>(), any::<u32>()).prop_map(|(cols, rows)| IpcCommand::Init { cols, rows }),
+            any::<u64>().prop_map(|dt_micros| IpcCommand::TickAndDraw { dt_micros }),
+            any::<f32>().prop_filter_map("finite hz", |hz| {
+                hz.is_finite().then_some(IpcCommand::SetSimulationRate { hz })
+            }),
+            Just(IpcCommand::Stop),
+        ]
+    }
+
+    fn arb_response() -> impl Strategy<Value = IpcResponse> {
+        prop_oneof![
+            Just(IpcResponse::Ready),
+            any::<bool>().prop_map(|scanlines| IpcResponse::FrameReady { scanlines }),
+            Just(IpcResponse::Ack),
+        ]
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(256))]
+
+        /// Every command encodes and decodes to an equal value.
+        #[test]
+        fn command_roundtrip(cmd in arb_command()) {
+            let mut buf = Vec::new();
+            cmd.write_to(&mut buf).expect("write");
+            let decoded = IpcCommand::read_from(&buf[..]).expect("read");
+            prop_assert_eq!(cmd, decoded);
+        }
+
+        /// Every response encodes and decodes to an equal value.
+        #[test]
+        fn response_roundtrip(resp in arb_response()) {
+            let mut buf = Vec::new();
+            resp.write_to(&mut buf).expect("write");
+            let decoded = IpcResponse::read_from(&buf[..]).expect("read");
+            prop_assert_eq!(resp, decoded);
+        }
+
+        /// SHM size is at least the header and grows linearly with cells.
+        #[test]
+        fn shm_size_monotonic(cols in 0usize..512, rows in 0usize..512) {
+            let size = compute_shm_size(cols, rows);
+            let header = std::mem::size_of::<SharedMemoryHeader>();
+            let cell = std::mem::size_of::<FfiTerminalCell>();
+            prop_assert!(size >= header);
+            prop_assert_eq!(size, header + cols * rows * cell);
+            if cols > 0 && rows > 0 {
+                prop_assert!(compute_shm_size(cols - 1, rows) < size || cols == 1);
+            }
+        }
+
+        /// Unknown command tags are rejected.
+        #[test]
+        fn invalid_command_tags_fail(tag in 4u8..=255) {
+            prop_assert!(IpcCommand::read_from(&[tag][..]).is_err());
+        }
+
+        /// Unknown response tags are rejected.
+        #[test]
+        fn invalid_response_tags_fail(tag in 3u8..=255) {
+            prop_assert!(IpcResponse::read_from(&[tag][..]).is_err());
+        }
     }
 }

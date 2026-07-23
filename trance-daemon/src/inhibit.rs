@@ -54,7 +54,7 @@ impl InhibitorState {
         }
         #[cfg(not(test))]
         {
-            let mut cache = self.logind_cache.lock().unwrap();
+            let mut cache = self.logind_cache.lock().unwrap_or_else(|e| e.into_inner());
             if cache.1.elapsed() >= std::time::Duration::from_secs(2) {
                 cache.0 = check_logind_inhibited();
                 cache.1 = std::time::Instant::now();
@@ -69,7 +69,7 @@ impl InhibitorState {
         reason: String,
         client: UniqueName<'static>,
     ) -> Result<u32, &'static str> {
-        let mut inhibitors = self.inhibitors.lock().unwrap();
+        let mut inhibitors = self.inhibitors.lock().unwrap_or_else(|e| e.into_inner());
         let count = inhibitors
             .iter()
             .filter(|entry| entry.client == client)
@@ -94,7 +94,7 @@ impl InhibitorState {
         client: UniqueName<'static>,
         cookie: u32,
     ) {
-        let mut inhibitors = self.inhibitors.lock().unwrap();
+        let mut inhibitors = self.inhibitors.lock().unwrap_or_else(|e| e.into_inner());
         if inhibitors
             .iter()
             .any(|entry| entry.cookie == cookie && entry.client == client)
@@ -117,7 +117,7 @@ impl InhibitorState {
 
     /// Remove an inhibitor only when `cookie` belongs to `client`.
     pub fn remove_for_client(&self, cookie: u32, client: &UniqueName<'_>) -> bool {
-        let mut inhibitors = self.inhibitors.lock().unwrap();
+        let mut inhibitors = self.inhibitors.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(index) = inhibitors
             .iter()
             .position(|entry| entry.cookie == cookie && entry.client == *client)
@@ -130,12 +130,12 @@ impl InhibitorState {
     }
 
     pub fn remove_client(&self, client: &UniqueName<'_>) {
-        let mut inhibitors = self.inhibitors.lock().unwrap();
+        let mut inhibitors = self.inhibitors.lock().unwrap_or_else(|e| e.into_inner());
         inhibitors.retain(|entry| entry.client != *client);
     }
 
     pub fn list(&self) -> Vec<(u32, String, String)> {
-        let inhibitors = self.inhibitors.lock().unwrap();
+        let inhibitors = self.inhibitors.lock().unwrap_or_else(|e| e.into_inner());
         inhibitors
             .iter()
             .map(|entry| {

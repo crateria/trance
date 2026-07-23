@@ -14,6 +14,7 @@ use trance_runner::launcher::LaunchMode;
 use trance_upscaler::{FilterMode, FrameUpscaler, resolve_render_scale};
 
 use super::ipc_init::initialize_ipc_session;
+use super::ipc_raster::raster_viewport_into;
 
 pub struct IpcPluginSession {
     saver_name: String,
@@ -162,65 +163,32 @@ impl IpcPluginSession {
         cols: usize,
         rows: usize,
         grid_cols: usize,
-        grid_rows: usize,
-        width: u32,
-        height: u32,
-        scanlines: bool,
-    ) -> Vec<u8> {
-        self.raster_viewport_internal(
-            col_start, row_start, cols, rows, grid_cols, grid_rows, width, height, scanlines,
-        );
-        let cap = self.pixel_buf.capacity();
-        std::mem::replace(&mut self.pixel_buf, Vec::with_capacity(cap))
-    }
-
-    fn raster_viewport_internal(
-        &mut self,
-        col_start: usize,
-        row_start: usize,
-        cols: usize,
-        rows: usize,
-        grid_cols: usize,
         _grid_rows: usize,
         width: u32,
         height: u32,
         scanlines: bool,
-    ) {
-        if self.hardware_scaling && !self.using_gpu_upscale() {
-            self.renderer.render_content_viewport_into(
-                &self.grid,
-                grid_cols,
-                col_start,
-                row_start,
-                cols,
-                rows,
-                scanlines,
-                &mut self.pixel_buf,
-            );
-            return;
-        }
-
-        let content_w = self.renderer.content_width(cols);
-        let content_h = self.renderer.content_height(rows);
-        self.renderer.render_content_viewport_into(
+    ) -> Vec<u8> {
+        let using_gpu = self.using_gpu_upscale();
+        let hardware_scaling = self.hardware_scaling;
+        raster_viewport_into(
+            &mut self.renderer,
+            &mut self.upscaler,
             &self.grid,
-            grid_cols,
+            hardware_scaling,
+            using_gpu,
+            &mut self.content_buf,
+            &mut self.pixel_buf,
             col_start,
             row_start,
             cols,
             rows,
-            scanlines,
-            &mut self.content_buf,
-        );
-
-        self.upscaler.upscale_stretch_into(
-            &self.content_buf,
-            content_w,
-            content_h,
+            grid_cols,
             width,
             height,
-            &mut self.pixel_buf,
+            scanlines,
         );
+        let cap = self.pixel_buf.capacity();
+        std::mem::replace(&mut self.pixel_buf, Vec::with_capacity(cap))
     }
 }
 

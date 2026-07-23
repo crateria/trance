@@ -9,3 +9,6 @@ license = "Apache-2.0"
 libc = { workspace = true }
 trance-api = { path = "../../trance-api" }
 tracing = { workspace = true }
+
+[dev-dependencies]
+proptest = "1"
