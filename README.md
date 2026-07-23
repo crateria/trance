@@ -1,67 +1,74 @@
-<p align="center">
-  <a href="https://crateria.github.io/">
-    <img src="assets/crateria-header.jpg" alt="Trance Banner" width="100%">
-  </a>
-</p>
-
-<h1 align="center">Trance</h1>
+<h1 align="center">
+  <img src="https://raw.githubusercontent.com/studio2201/.github/master/profile/assets/trance.png" width="48" height="48" valign="middle"> Trance
+</h1>
 
 <p align="center">
-  <b>Modular, High-Performance Wayland Screensaver & Idle Engine in Rust</b>
-</p>
-
-<p align="center">
-  <a href="https://github.com/studio2201/trance/actions/workflows/ci.yml"><img src="https://github.com/studio2201/trance/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/studio2201/trance/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
-  <a href="https://github.com/studio2201/trance"><img src="https://img.shields.io/badge/language-Rust-orange.svg" alt="Rust"></a>
+  <b>Modern modular Wayland screensaver and ambient display daemon for Linux written in Rust.</b>
 </p>
 
 ---
 
-### Instant Installation (One Line)
+### Instant One-Line Install (Native Package Manager)
+
+On Debian, Ubuntu, Fedora, or RHEL:
 
 ```bash
-curl -fsSL https://crateria.github.io/install.sh | sh
+curl -fsSL https://studio2201.github.io/packages/install.sh | sudo bash
 ```
 
 ---
 
-### Instant Quick Start (One Command)
+### Unraid NAS & Linux Container Deployment
 
-Preview the default **Beams** screensaver in high-fps fullscreen mode:
-
-```bash
-trance preview beams
-```
-
-Toggle interactive controls or system diagnostics:
+Run the official zero-dependency container:
 
 ```bash
-trance interactive   # Launch interactive TUI control panel
-trance doctor        # Run self-healing system diagnostics
+docker run -d --name trance --net=host -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/studio2201/trance:latest
 ```
 
 ---
 
-### Showcase
+### Environment Configuration
 
-<p align="center">
-  <img src="assets/beams.webp" alt="Beams Saver" width="48%">
-  <img src="assets/ripple.webp" alt="Ripple Saver" width="48%">
-</p>
+The daemon service can be customized using the following environment variables:
+
+| Variable | Description | Default |
+| :--- | :--- | :---: |
+| `TRANCE_IDLE_TIMEOUT_MINS` | Minutes of inactivity before screensaver activates | `10` |
+| `TRANCE_ACTIVE_SAVER` | Active plugin name (e.g. `beams`, `matrix`, `flurry`) | `beams` |
+| `TRANCE_SHOW_FPS` | Display real-time FPS overlay | `false` |
+| `LOG_LEVEL` | Tracing filter (`error`, `warn`, `info`, `debug`) | `info` |
 
 ---
 
-### Core Architecture & Ecosystem Docs
+### Administration CLI & Control Utility
 
-For deeper technical specifications, protocol compliance, IPC wire formats, and plugin development guides:
+Every installation includes the `trance-cli` control binary.
 
-- 📖 **[Architecture Overview](ARCHITECTURE.md)** — Wayland layer-shell, D-Bus interfaces, and out-of-process `memfd_create` IPC pipeline.
-- ⚙️ **[Plugin Developer Guide](docs/PLUGINS.md)** — How to write custom high-performance terminal & GPU screensavers in Rust.
-- 🛠️ **[CLI & Daemon Manual](docs/USAGE.md)** — Full command reference and `config.yaml` customization options.
+CLI Command Reference:
+- `trance-cli status` — Displays screensaver state and active plugin.
+- `trance-cli enable` — Enables automatic idle screensaver.
+- `trance-cli disable` — Disables automatic idle screensaver.
+- `trance-cli preview <plugin>` — Runs a full-screen preview of a specific screensaver.
+
+---
+
+### Architecture & Security
+
+- **Native Wayland Integration**: Built on `ext-idle-notify-v1` and `ext-session-lock-v1` protocols.
+- **GPU Accelerated Cell Renderer**: High-efficiency wgpu rendering pipeline for cell-based visualizers.
+- **Fail-Safe PAM Authentication**: Secure screen lock integration with local PAM fallback authentication.
 
 ---
 
 ### License
 
 Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <a href="https://github.com/studio2201/trance">
+    <img src="assets/trance-header.jpg" alt="studio2201 banner" width="100%">
+  </a>
+</p>

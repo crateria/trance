@@ -108,8 +108,14 @@ pub fn authenticate(user: &str, password: &str) -> bool {
         "system-lock",
         "login",
     ];
-    let c_user = std::ffi::CString::new(user).unwrap();
-    let c_password = std::ffi::CString::new(password).unwrap();
+    let c_user = match std::ffi::CString::new(user) {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
+    let c_password = match std::ffi::CString::new(password) {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
 
     let conv = pam_conv {
         conv: Some(simple_pam_conv),

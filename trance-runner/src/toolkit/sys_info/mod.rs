@@ -39,13 +39,13 @@ fn get_system() -> std::sync::MutexGuard<'static, sysinfo::System> {
     SYSTEM_OBJECT
         .get_or_init(|| Mutex::new(sysinfo::System::new_all()))
         .lock()
-        .unwrap()
+        .unwrap_or_else(|e| e.into_inner())
 }
 
 /// Returns rich live system info. Cross-platform. Cached for 3 seconds.
 pub fn get_system_info() -> SystemInfo {
     let cache_mutex = SYSTEM_INFO_CACHE.get_or_init(|| Mutex::new((None, Instant::now())));
-    let mut cache = cache_mutex.lock().unwrap();
+    let mut cache = cache_mutex.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(ref val) = cache.0
         && cache.1.elapsed() < Duration::from_secs(3)
     {

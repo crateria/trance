@@ -13,7 +13,11 @@ use crate::controller::DaemonController;
 pub fn initialize_runtime(
     controller: &DaemonController,
 ) -> anyhow::Result<(IdleMonitor, Arc<OverlayPresenter>)> {
-    let idle_timeout = controller.config.lock().unwrap().idle_timeout_mins;
+    let idle_timeout = controller
+        .config
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .idle_timeout_mins;
     let idle_monitor = IdleMonitor::new(idle_timeout).ok_or_else(|| {
         anyhow!("Wayland idle monitoring is unavailable; ensure ext-idle-notify-v1 is supported")
     })?;

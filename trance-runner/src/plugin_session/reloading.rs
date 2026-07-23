@@ -102,7 +102,7 @@ impl PluginSession {
         self.watcher = Some(watcher);
         tracing::info!(
             "Started file watcher on {:?}",
-            self.plugin_path.parent().unwrap()
+            self.plugin_path.parent().unwrap_or(&self.plugin_path)
         );
         Ok(())
     }

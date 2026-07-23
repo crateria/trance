@@ -125,7 +125,6 @@ impl CellRenderer {
                 }
             }
 
-            let atlas_chars = self.atlas_chars.clone();
             self.rebuild_atlas_image();
 
             let cell_w = self.cell_width;
@@ -134,26 +133,27 @@ impl CellRenderer {
             let atlas_rows = self.atlas_rows;
             let atlas_dirty = self.atlas_dirty;
 
-            let gpu = self.gpu_renderer.as_mut().unwrap();
-            gpu.render(
-                grid,
-                grid_cols,
-                col_start,
-                row_start,
-                cols,
-                rows,
-                scanlines,
-                cell_w,
-                cell_h,
-                atlas_cols,
-                atlas_rows,
-                &self.atlas_image,
-                atlas_dirty,
-                &atlas_chars,
-                out,
-            );
-            self.reset_atlas_dirty();
-            return;
+            if let Some(gpu) = self.gpu_renderer.as_mut() {
+                gpu.render(
+                    grid,
+                    grid_cols,
+                    col_start,
+                    row_start,
+                    cols,
+                    rows,
+                    scanlines,
+                    cell_w,
+                    cell_h,
+                    atlas_cols,
+                    atlas_rows,
+                    &self.atlas_image,
+                    atlas_dirty,
+                    &self.atlas_chars,
+                    out,
+                );
+                self.reset_atlas_dirty();
+                return;
+            }
         }
 
         let content_w = self.content_width(cols);

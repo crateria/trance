@@ -14,7 +14,7 @@ static DARK_MODE_CACHE: OnceLock<Mutex<(Option<bool>, Instant)>> = OnceLock::new
 /// Detect dark mode preference. Cached for 3 seconds.
 pub fn query_dark_mode() -> bool {
     let cache_mutex = DARK_MODE_CACHE.get_or_init(|| Mutex::new((None, Instant::now())));
-    let mut cache = cache_mutex.lock().unwrap();
+    let mut cache = cache_mutex.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(val) = cache.0
         && cache.1.elapsed() < Duration::from_secs(3)
     {

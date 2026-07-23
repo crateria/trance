@@ -84,7 +84,9 @@ impl PluginSession {
         self.simulation_cols = cols;
         self.simulation_rows = rows;
         self.grid = vec![TerminalCell::default(); cols * rows];
-        self.plugin.as_mut().unwrap().saver_mut().init(cols, rows);
+        if let Some(plugin) = self.plugin.as_mut() {
+            plugin.saver_mut().init(cols, rows);
+        }
     }
 
     pub fn set_simulation_rate(&mut self, fps: f32) {
@@ -94,11 +96,9 @@ impl PluginSession {
 
     #[tracing::instrument(skip_all)]
     pub fn tick(&mut self, frame_dt: Duration) {
-        self.plugin
-            .as_mut()
-            .unwrap()
-            .saver_mut()
-            .update_frame_time(frame_dt);
+        if let Some(plugin) = self.plugin.as_mut() {
+            plugin.saver_mut().update_frame_time(frame_dt);
+        }
         self.time_elapsed += frame_dt;
 
         self.physics_accumulator += frame_dt;
@@ -110,11 +110,9 @@ impl PluginSession {
             let dt = self.physics_duration;
             let cols = self.simulation_cols;
             let rows = self.simulation_rows;
-            self.plugin
-                .as_mut()
-                .unwrap()
-                .saver_mut()
-                .update(dt, cols, rows);
+            if let Some(plugin) = self.plugin.as_mut() {
+                plugin.saver_mut().update(dt, cols, rows);
+            }
             self.physics_accumulator -= dt;
         }
     }
@@ -136,9 +134,13 @@ impl PluginSession {
         if self.grid.len() != grid_cols * grid_rows {
             self.grid = vec![TerminalCell::default(); grid_cols * grid_rows];
         }
-        let saver = self.plugin.as_mut().unwrap().saver_mut();
-        saver.draw(&mut self.grid, grid_cols, grid_rows);
-        saver.has_scanlines()
+        if let Some(plugin) = self.plugin.as_mut() {
+            let saver = plugin.saver_mut();
+            saver.draw(&mut self.grid, grid_cols, grid_rows);
+            saver.has_scanlines()
+        } else {
+            false
+        }
     }
 
     #[tracing::instrument(skip_all, fields(cols, rows, width, height))]

@@ -12,7 +12,7 @@ static MONITOR_LAYOUT_CACHE: OnceLock<Mutex<Option<MonitorLayoutCacheEntry>>> = 
 
 pub fn get_monitor_layouts(cols: usize, rows: usize) -> Vec<MonitorCellBounds> {
     let cache_mutex = MONITOR_LAYOUT_CACHE.get_or_init(|| Mutex::new(None));
-    let mut cache = cache_mutex.lock().unwrap();
+    let mut cache = cache_mutex.lock().unwrap_or_else(|e| e.into_inner());
     if let Some((ref layouts, (cached_cols, cached_rows), last_query)) = *cache
         && cached_cols == cols
         && cached_rows == rows

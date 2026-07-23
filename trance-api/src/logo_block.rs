@@ -53,12 +53,11 @@ type LogoCacheEntry = (String, Option<String>, Vec<String>);
 /// Renders the live centered logo block.
 pub fn render_logo_block(text: &str, sub_text: Option<&str>) -> Vec<String> {
     static CACHE: std::sync::Mutex<Option<LogoCacheEntry>> = std::sync::Mutex::new(None);
-    let mut lock = CACHE.lock().unwrap();
-    if lock
-        .as_ref()
-        .is_some_and(|entry| entry.0 == text && entry.1.as_deref() == sub_text)
-    {
-        return lock.as_ref().unwrap().2.clone();
+    let mut lock = CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(entry) = lock.as_ref() {
+        if entry.0 == text && entry.1.as_deref() == sub_text {
+            return entry.2.clone();
+        }
     }
 
     let chars: Vec<char> = text.chars().collect();

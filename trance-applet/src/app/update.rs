@@ -101,21 +101,25 @@ impl AppModel {
                 } else {
                     self.refresh_daemon_state();
 
-                    let new_id = Id::unique();
-                    self.popup.replace(new_id);
-                    let mut popup_settings = self.core.applet.get_popup_settings(
-                        self.core.main_window_id().unwrap(),
-                        new_id,
-                        None,
-                        None,
-                        None,
-                    );
-                    popup_settings.positioner.size_limits = Limits::NONE
-                        .max_width(372.0)
-                        .min_width(300.0)
-                        .min_height(200.0)
-                        .max_height(1080.0);
-                    get_popup(popup_settings)
+                    if let Some(main_win_id) = self.core.main_window_id() {
+                        let new_id = Id::unique();
+                        self.popup.replace(new_id);
+                        let mut popup_settings = self.core.applet.get_popup_settings(
+                            main_win_id,
+                            new_id,
+                            None,
+                            None,
+                            None,
+                        );
+                        popup_settings.positioner.size_limits = Limits::NONE
+                            .max_width(372.0)
+                            .min_width(300.0)
+                            .min_height(200.0)
+                            .max_height(1080.0);
+                        get_popup(popup_settings)
+                    } else {
+                        Command::none()
+                    }
                 };
             }
             Message::MiddleClick => {

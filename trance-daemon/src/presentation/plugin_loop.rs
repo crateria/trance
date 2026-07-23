@@ -84,7 +84,10 @@ pub fn run_plugin_loop(
         .ok_or_else(|| "no primary output found".to_string())?;
 
     let primary_bounds = if topology.independent_rendering {
-        let primary_session = sessions.iter().find(|s| s.output_id == primary.id).unwrap();
+        let primary_session = sessions
+            .iter()
+            .find(|s| s.output_id == primary.id)
+            .ok_or_else(|| "primary session missing".to_string())?;
         trance_api::MonitorCellBounds {
             start_col: 0,
             end_col: primary_session.cols,
@@ -99,7 +102,10 @@ pub fn run_plugin_loop(
     };
 
     let (v_cols, v_rows) = if topology.independent_rendering {
-        let primary_session = sessions.iter().find(|s| s.output_id == primary.id).unwrap();
+        let primary_session = sessions
+            .iter()
+            .find(|s| s.output_id == primary.id)
+            .ok_or_else(|| "primary session missing".to_string())?;
         (primary_session.cols, primary_session.rows)
     } else {
         (sessions[0].cols, sessions[0].rows)

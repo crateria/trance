@@ -95,10 +95,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         if let Some(src_path) = deb_file_path {
-            println!("Built: {:?}", src_path.file_name().unwrap());
-            let dest_path = apt_pool.join(src_path.file_name().unwrap());
-            fs::copy(&src_path, &dest_path)?;
-            println!("Copied to apt repository packages/apt/pool/main/");
+            if let Some(fname) = src_path.file_name() {
+                println!("Built: {:?}", fname);
+                let dest_path = apt_pool.join(fname);
+                fs::copy(&src_path, &dest_path)?;
+                println!("Copied to apt repository packages/apt/pool/main/");
+            }
         } else {
             println!("Warning: Debian package not found for {} (searched for: {}).", crate_name, pkg_name);
         }
@@ -127,10 +129,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         if let Some(src_path) = rpm_file_path {
-            println!("Built RPM: {:?}", src_path.file_name().unwrap());
-            let dest_path = rpm_pool.join(src_path.file_name().unwrap());
-            fs::copy(&src_path, &dest_path)?;
-            println!("Copied to rpm repository packages/rpm/pool/");
+            if let Some(fname) = src_path.file_name() {
+                println!("Built RPM: {:?}", fname);
+                let dest_path = rpm_pool.join(fname);
+                fs::copy(&src_path, &dest_path)?;
+                println!("Copied to rpm repository packages/rpm/pool/");
+            }
         } else {
             println!("Warning: RPM package not found for {} (searched for: {}).", crate_name, pkg_name);
         }

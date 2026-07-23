@@ -14,7 +14,7 @@ impl DaemonController {
         let mut config = self
             .config
             .lock()
-            .expect("controller config mutex poisoned");
+            .unwrap_or_else(|e| e.into_inner());
         f(&mut config);
         config.save().context("saving config")?;
         self.mark_dirty();

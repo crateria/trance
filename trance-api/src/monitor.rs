@@ -75,7 +75,7 @@ fn env_bounds_cache() -> &'static Mutex<Option<MonitorCellBounds>> {
 }
 
 fn cached_primary_bounds_from_env() -> Option<MonitorCellBounds> {
-    let mut cache = env_bounds_cache().lock().unwrap();
+    let mut cache = env_bounds_cache().lock().unwrap_or_else(|e| e.into_inner());
     if cache.is_none() {
         *cache = read_primary_bounds_from_env();
     }
@@ -122,7 +122,7 @@ pub fn publish_primary_bounds(bounds: MonitorCellBounds) {
         std::env::set_var("TRANCE_PRIMARY_START_ROW", bounds.start_row.to_string());
         std::env::set_var("TRANCE_PRIMARY_END_ROW", bounds.end_row.to_string());
     }
-    *env_bounds_cache().lock().unwrap() = Some(bounds);
+    *env_bounds_cache().lock().unwrap_or_else(|e| e.into_inner()) = Some(bounds);
 }
 
 pub fn clear_primary_bounds() {
@@ -133,7 +133,7 @@ pub fn clear_primary_bounds() {
         std::env::remove_var("TRANCE_PRIMARY_START_ROW");
         std::env::remove_var("TRANCE_PRIMARY_END_ROW");
     }
-    *env_bounds_cache().lock().unwrap() = None;
+    *env_bounds_cache().lock().unwrap_or_else(|e| e.into_inner()) = None;
 }
 
 pub fn is_secondary_monitor() -> bool {

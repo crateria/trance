@@ -35,7 +35,11 @@ pub fn tick_loop_until_shutdown(controller: Arc<DaemonController>) -> anyhow::Re
         }
 
         // One config snapshot per tick for presentation decisions.
-        let config = controller.config.lock().unwrap().clone();
+        let config = controller
+            .config
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
         let system_idle = idle_monitor.is_idle();
         let session_locked = controller.session_locked.load(Ordering::Relaxed);
         let inhibited = controller.inhibitors.is_inhibited();

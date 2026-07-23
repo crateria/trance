@@ -72,7 +72,12 @@ impl ScreenSaverService {
     }
 
     async fn get_active(&self) -> bool {
-        let active = self.controller.status.lock().unwrap().presentation_active;
+        let active = self
+            .controller
+            .status
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .presentation_active;
         tracing::debug!("ScreenSaver: GetActive requested: {}", active);
         active
     }
@@ -89,7 +94,7 @@ impl ScreenSaverService {
                 .controller
                 .config
                 .lock()
-                .unwrap()
+                .unwrap_or_else(|e| e.into_inner())
                 .active_saver
                 .clone()
                 .unwrap_or_else(|| "beams".to_string());

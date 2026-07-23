@@ -72,13 +72,13 @@ impl DaemonController {
     }
 
     pub fn set_dbus_connection(&self, connection: zbus::Connection) {
-        *self.dbus_connection.lock().unwrap() = Some(connection);
+        *self.dbus_connection.lock().unwrap_or_else(|e| e.into_inner()) = Some(connection);
     }
 
     pub fn dbus_connection(&self) -> Result<zbus::Connection, String> {
         self.dbus_connection
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .clone()
             .ok_or_else(|| "D-Bus connection unavailable".into())
     }
@@ -87,15 +87,15 @@ impl DaemonController {
         if !self.take_dirty() {
             return;
         }
-        let status = self.status.lock().unwrap().clone();
-        if let Some(sender) = self.status_emit_tx.lock().unwrap().as_ref() {
+        let status = self.status.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        if let Some(sender) = self.status_emit_tx.lock().unwrap_or_else(|e| e.into_inner()).as_ref() {
             let _ = sender.send(status);
         }
     }
 
     pub fn drain_commands(&self) -> Vec<DaemonCommand> {
         let mut commands = Vec::new();
-        let receiver = self.command_rx.lock().unwrap();
+        let receiver = self.command_rx.lock().unwrap_or_else(|e| e.into_inner());
         while let Ok(command) = receiver.try_recv() {
             commands.push(command);
         }

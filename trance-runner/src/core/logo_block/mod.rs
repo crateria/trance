@@ -12,7 +12,7 @@ type LogoCacheEntry = (String, Option<String>, Vec<String>);
 /// Perfect for retro console effects and dashboards.
 pub fn render_logo_block(text: &str, sub_text: Option<&str>) -> Vec<String> {
     static CACHE: std::sync::Mutex<Option<LogoCacheEntry>> = std::sync::Mutex::new(None);
-    let mut lock = CACHE.lock().unwrap();
+    let mut lock = CACHE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some((cached_text, cached_sub, cached_val)) = &*lock
         && cached_text == text
         && cached_sub.as_deref() == sub_text

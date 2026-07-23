@@ -121,11 +121,10 @@ impl GpuCellRenderer {
         }
 
         if recreate_bind || self.bind_group.is_none() {
-            let atlas_view = self
-                .atlas_texture
-                .as_ref()
-                .unwrap()
-                .create_view(&wgpu::TextureViewDescriptor::default());
+            let Some(atlas) = self.atlas_texture.as_ref() else {
+                return;
+            };
+            let atlas_view = atlas.create_view(&wgpu::TextureViewDescriptor::default());
             self.bind_group = Some(self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("bind group"),
                 layout: &self.bind_group_layout,
@@ -175,17 +174,23 @@ impl GpuCellRenderer {
         self.queue
             .write_buffer(&cells_buf, 0, bytemuck::cast_slice(&gpu_cells));
 
+        let Some(target_tex) = self.texture.as_ref() else {
+            return;
+        };
+        let Some(bind_gp) = self.bind_group.as_ref() else {
+            return;
+        };
+        let Some(staging_buf) = self.staging_buffer.as_ref() else {
+            return;
+        };
+
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("render"),
             });
         {
-            let target_view = self
-                .texture
-                .as_ref()
-                .unwrap()
-                .create_view(&wgpu::TextureViewDescriptor::default());
+            let target_view = target_tex.create_view(&wgpu::TextureViewDescriptor::default());
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("render pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -203,19 +208,19 @@ impl GpuCellRenderer {
                 multiview_mask: None,
             });
             render_pass.set_pipeline(&self.pipeline);
-            render_pass.set_bind_group(0, self.bind_group.as_ref().unwrap(), &[]);
+            render_pass.set_bind_group(0, bind_gp, &[]);
             render_pass.draw(0..6, 0..(cols * rows) as u32);
         }
 
         encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfo {
-                texture: self.texture.as_ref().unwrap(),
+                texture: target_tex,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
             wgpu::TexelCopyBufferInfo {
-                buffer: self.staging_buffer.as_ref().unwrap(),
+                buffer: staging_buf,
                 layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(padded),
