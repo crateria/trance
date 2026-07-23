@@ -1,18 +1,27 @@
 // SPDX-License-Identifier: MIT
+//! Plugin presentation loop: top-level orchestrator.
+//!
+//! Helpers (output layout logging, primary-bounds callback install,
+//! frame pacing) live in `super::helpers` and are re-exported below
+//! so the daemon's `mod.rs` and `main.rs` continue to find them at
+//! `super::plugin_loop::*`.
+// SPDX-License-Identifier: MIT
 
 use std::sync::atomic::AtomicBool;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
+mod helpers;
+use helpers::{FramePacing, log_output_layouts, log_run_startup};
 use super::ipc_session::IpcPluginSession;
-use trance_api::{clear_caption, clear_primary_bounds};
-use trance_upscaler::{simulation_tick_hz, target_fps};
-use wayland_present::{OutputLayout, OverlayPresenter};
+use trance_api::clear_caption;
+use trance_api::clear_primary_bounds;
+use wayland_present::OverlayPresenter;
 
 use super::frame_loop::{ActiveSession, run_frame_loop};
 use super::layout::{
-    install_primary_bounds_callback, primary_bounds_in_grid, span_simulation_grid, virtual_desktop,
+    primary_bounds_in_grid, span_simulation_grid, virtual_desktop,
 };
-use super::refresh::{presentation_refresh_hz, wait_for_output_layouts};
+use super::refresh::wait_for_output_layouts;
 use crate::presentation::PresentationOptions;
 
 #[tracing::instrument(skip_all, fields(saver_name = %saver_name))]
@@ -111,7 +120,7 @@ pub fn run_plugin_loop(
         (sessions[0].cols, sessions[0].rows)
     };
 
-    install_layout_callbacks(primary_bounds, v_cols, v_rows);
+    helpers::install_layout_callbacks(primary_bounds, v_cols, v_rows);
 
     let pacing = FramePacing::compute(&layouts, primary, &mut sessions);
     log_run_startup(saver_name, &layouts, &pacing, &sessions[0].session);
@@ -129,123 +138,4 @@ pub fn run_plugin_loop(
     clear_primary_bounds();
     clear_caption();
     result
-}
-
-fn log_output_layouts(layouts: &[OutputLayout]) {
-    for layout in layouts {
-        tracing::info!(
-            "output {} @ ({}, {}) — {}x{} @ {} Hz (scale: {})",
-            layout.id,
-            layout.x,
-            layout.y,
-            layout.width,
-            layout.height,
-            layout.refresh_rate_hz,
-            layout.scale
-        );
-    }
-}
-
-fn install_layout_callbacks(
-    primary_bounds: trance_api::MonitorCellBounds,
-    virtual_cols: usize,
-    virtual_rows: usize,
-) {
-    trance_api::publish_primary_bounds(primary_bounds);
-    install_primary_bounds_callback(primary_bounds, virtual_cols, virtual_rows);
-    let _ = trance_api::IS_SECONDARY_MONITOR_CALLBACK.set(|| false);
-}
-
-struct FramePacing {
-    present_fps: f32,
-    tick_hz: f32,
-    frame_duration: Duration,
-    last_frame: Instant,
-    frame_counter: u64,
-    fps_report: Instant,
-    achieved_fps: f32,
-}
-
-impl FramePacing {
-    fn compute(
-        layouts: &[OutputLayout],
-        primary: OutputLayout,
-        sessions: &mut [ActiveSession],
-    ) -> Self {
-        let present_refresh = presentation_refresh_hz(layouts, primary);
-        let mut present_fps = target_fps(present_refresh);
-        let mut tick_hz = simulation_tick_hz();
-
-        let sys = trance_runner::toolkit::sys_info::get_system_info();
-        if sys.power_status.contains("Battery") {
-            present_fps = present_fps.min(30.0);
-            tick_hz = tick_hz.min(30.0);
-            tracing::info!(
-                "Battery power detected: capping physics simulation and rendering frame rate targets to 30 FPS/Hz"
-            );
-        }
-
-        let frame_duration = Duration::from_secs_f32(1.0 / present_fps);
-        for s in sessions {
-            s.session.set_simulation_rate(tick_hz);
-        }
-        Self {
-            present_fps,
-            tick_hz,
-            frame_duration,
-            last_frame: Instant::now(),
-            frame_counter: 0,
-            fps_report: Instant::now(),
-            achieved_fps: 0.0,
-        }
-    }
-
-    fn run_loop(
-        mut self,
-        presenter: &OverlayPresenter,
-        stop: &AtomicBool,
-        sessions: &mut [ActiveSession],
-        layouts: &[OutputLayout],
-        primary: OutputLayout,
-        independent_rendering: bool,
-        options: PresentationOptions,
-    ) -> Result<(), String> {
-        run_frame_loop(
-            presenter,
-            stop,
-            sessions,
-            layouts,
-            primary,
-            independent_rendering,
-            options,
-            self.present_fps,
-            self.tick_hz,
-            self.frame_duration,
-            &mut self.last_frame,
-            &mut self.frame_counter,
-            &mut self.fps_report,
-            &mut self.achieved_fps,
-        )
-    }
-}
-
-fn log_run_startup(
-    saver_name: &str,
-    layouts: &[OutputLayout],
-    pacing: &FramePacing,
-    session: &IpcPluginSession,
-) {
-    tracing::info!(
-        "running plugin '{}' on {} monitor(s) at {:.0} FPS / {:.0} tick (render scale {:.0}%, GPU: {})",
-        saver_name,
-        layouts.len(),
-        pacing.present_fps,
-        pacing.tick_hz,
-        session.render_scale() * 100.0,
-        if session.using_gpu_upscale() {
-            "yes"
-        } else {
-            "no"
-        }
-    );
 }
