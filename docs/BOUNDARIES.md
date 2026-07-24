@@ -47,7 +47,7 @@ Kernel (DRM, input, Landlock, IPC)         -- NOT IdleScreen core (we use APIs)
 
 1. **Product idle policy** -- when to start/stop presentation given observed
    signals (compositor idle, inhibit, lock, config, preview).
-2. **Plugin universe** -- `trance-api` trait/ABI, discovery, allowlist, load,
+2. **Plugin universe** -- `idle-api` trait/ABI, discovery, allowlist, load,
    sandbox after load, seed env for determinism.
 3. **Raster of the cell grid** -- `TerminalCell` to pixels; upscale/letterbox.
 4. **Product control plane** -- D-Bus API and CLI (TUI/applet are clients).
@@ -75,7 +75,7 @@ a desktop explicitly provides that integration slot.
 | layer-shell (or equivalent) | We request a full-screen guest layer |
 | Wayland outputs | Geometry for multi-monitor policy |
 | D-Bus (product name) | Control ABI for cli / tui / applet |
-| Plugin FFI + trance-api | Effect ABI for saver-* |
+| Plugin FFI + idle-api | Effect ABI for saver-* |
 | Optional SHM/IPC | Isolation between daemon and plugin process |
 | Landlock | Kernel-enforced FS constraint on plugin host |
 

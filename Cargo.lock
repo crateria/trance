@@ -635,6 +635,103 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 
 [[package]]
+name = "idle-api"
+version = "2.3.0"
+dependencies = [
+ "bytemuck",
+ "proptest",
+]
+
+[[package]]
+name = "idle-cli"
+version = "2.3.0"
+dependencies = [
+ "anyhow",
+ "idle-dbus",
+ "libc",
+ "tracing",
+ "tracing-journald",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "idle-daemon"
+version = "2.3.0"
+dependencies = [
+ "anyhow",
+ "futures-lite",
+ "idle-api",
+ "idle-dbus",
+ "idle-ipc",
+ "idle-runner",
+ "idle-upscaler",
+ "libc",
+ "libloading 0.8.9",
+ "notify",
+ "signal-hook 0.4.4",
+ "tokio",
+ "tracing",
+ "tracing-journald",
+ "tracing-subscriber",
+ "wayland-idle",
+ "wayland-present",
+ "zbus",
+]
+
+[[package]]
+name = "idle-dbus"
+version = "0.4.0"
+dependencies = [
+ "tracing",
+ "zbus",
+]
+
+[[package]]
+name = "idle-ipc"
+version = "0.4.0"
+dependencies = [
+ "idle-api",
+ "libc",
+ "proptest",
+]
+
+[[package]]
+name = "idle-plugins-all"
+version = "2.3.0"
+
+[[package]]
+name = "idle-runner"
+version = "2.3.0"
+dependencies = [
+ "bytemuck",
+ "crossterm",
+ "fontdue",
+ "futures-lite",
+ "idle-api",
+ "idle-upscaler",
+ "landlock",
+ "libc",
+ "libloading 0.9.0",
+ "notify",
+ "proptest",
+ "sysinfo",
+ "tempfile",
+ "thiserror",
+ "tracing",
+ "tracing-subscriber",
+ "wgpu",
+]
+
+[[package]]
+name = "idle-upscaler"
+version = "0.4.0"
+dependencies = [
+ "bytemuck",
+ "idle-api",
+ "tracing",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1754,103 +1851,6 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
-]
-
-[[package]]
-name = "trance-api"
-version = "2.2.1"
-dependencies = [
- "bytemuck",
- "proptest",
-]
-
-[[package]]
-name = "trance-cli"
-version = "2.2.1"
-dependencies = [
- "anyhow",
- "libc",
- "tracing",
- "tracing-journald",
- "tracing-subscriber",
- "trance-dbus",
-]
-
-[[package]]
-name = "trance-daemon"
-version = "2.2.1"
-dependencies = [
- "anyhow",
- "futures-lite",
- "libc",
- "libloading 0.8.9",
- "notify",
- "signal-hook 0.4.4",
- "tokio",
- "tracing",
- "tracing-journald",
- "tracing-subscriber",
- "trance-api",
- "trance-dbus",
- "trance-ipc",
- "trance-runner",
- "trance-upscaler",
- "wayland-idle",
- "wayland-present",
- "zbus",
-]
-
-[[package]]
-name = "trance-dbus"
-version = "0.3.63"
-dependencies = [
- "tracing",
- "zbus",
-]
-
-[[package]]
-name = "trance-ipc"
-version = "0.3.66"
-dependencies = [
- "libc",
- "proptest",
- "trance-api",
-]
-
-[[package]]
-name = "trance-plugins-all"
-version = "2.2.0"
-
-[[package]]
-name = "trance-runner"
-version = "2.2.1"
-dependencies = [
- "bytemuck",
- "crossterm",
- "fontdue",
- "futures-lite",
- "landlock",
- "libc",
- "libloading 0.9.0",
- "notify",
- "proptest",
- "sysinfo",
- "tempfile",
- "thiserror",
- "tracing",
- "tracing-subscriber",
- "trance-api",
- "trance-upscaler",
- "wgpu",
-]
-
-[[package]]
-name = "trance-upscaler"
-version = "0.3.62"
-dependencies = [
- "bytemuck",
- "tracing",
- "trance-api",
 ]
 
 [[package]]

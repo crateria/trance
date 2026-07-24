@@ -12,11 +12,11 @@ See also [BOUNDARIES.md](BOUNDARIES.md).
 | Interface | `io.github.ubermetroid.trance` |
 | Object path | `/io/github/crateria/trance` |
 
-Defined in `crates/trance-dbus` as `SERVICE_NAME`, `INTERFACE_NAME`, `OBJECT_PATH`.
+Defined in `crates/idle-dbus` as `SERVICE_NAME`, `INTERFACE_NAME`, `OBJECT_PATH`.
 
 ## Clients
 
-- `trance-cli` (this workspace)
+- `idle-cli` (this workspace)
 - `trance-tui` / idle-tui
 - COSMIC applet / idle-cosmic
 

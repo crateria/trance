@@ -15,14 +15,14 @@ IdleScreen is a **Wayland client and plugin host**, not a compositor or lock scr
 ```bash
 cargo fmt --all
 cargo clippy --workspace --all-targets -- -D warnings
-cargo test -p trance-api -p trance-dbus -p trance-ipc -p trance-runner -p trance-daemon -p trance-cli
+cargo test -p idle-api -p idle-dbus -p idle-ipc -p idle-runner -p idle-daemon -p idle-cli
 ```
 
 Default branch: `master`.
 
 ## Packaging names
 
-Brand is IdleScreen. Crate/binary/deb names may remain `trance*` for install
+Brand is IdleScreen. Cargo crates are `idle-*`; D-Bus wire and some binary aliases remain historical. Install
 stability. Applet packaging lives in `idlescreen/idle-cosmic`; TUI in
 `idlescreen/idle-tui`.
 

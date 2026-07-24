@@ -3,14 +3,14 @@ resolver = "2"
 members = [
     "crates/wayland-idle",
     "crates/wayland-present",
-    "crates/trance-dbus",
-    "crates/trance-upscaler",
-    "crates/trance-ipc",
-    "trance-api",
-    "trance-runner",
-    "trance-daemon",
-    "trance-cli",
-    "trance-plugins-all",
+    "crates/idle-dbus",
+    "crates/idle-upscaler",
+    "crates/idle-ipc",
+    "idle-api",
+    "idle-runner",
+    "idle-daemon",
+    "idle-cli",
+    "idle-plugins-all",
 ]
 
 [profile.release]
@@ -24,11 +24,11 @@ strip = true             # Strip symbols and debuginfo
 tokio = { version = "1.52", features = ["full"] }
 libc = "0.2"
 zbus = { version = "5.12", default-features = false, features = ["tokio"] }
-trance-api = { path = "trance-api" }
-trance-dbus = { path = "crates/trance-dbus" }
-trance-runner = { path = "trance-runner" }
-trance-upscaler = { path = "crates/trance-upscaler" }
-trance-ipc = { path = "crates/trance-ipc" }
+idle-api = { path = "idle-api" }
+idle-dbus = { path = "crates/idle-dbus" }
+idle-runner = { path = "idle-runner" }
+idle-upscaler = { path = "crates/idle-upscaler" }
+idle-ipc = { path = "crates/idle-ipc" }
 wayland-idle = { path = "crates/wayland-idle" }
 wayland-present = { path = "crates/wayland-present" }
 

@@ -9,9 +9,9 @@ use std::path::Path;
 use std::process::Command;
 
 const CRATES: &[&str] = &[
-    "trance-daemon",
-    "trance-cli",
-    "trance-plugins-all",
+    "idle-daemon",
+    "idle-cli",
+    "idle-plugins-all",
     "// applet lives in idlescreen/idle-cosmic"
 ];
 
@@ -24,7 +24,7 @@ fn run_cmd(cmd: &mut Command) -> Result<(), String> {
 }
 
 fn get_version() -> Result<String, String> {
-    let content = fs::read_to_string("trance-daemon/Cargo.toml").map_err(|e| e.to_string())?;
+    let content = fs::read_to_string("idle-daemon/Cargo.toml").map_err(|e| e.to_string())?;
     for line in content.lines() {
         if line.starts_with("version =") {
             let parts: Vec<&str> = line.split('"').collect();
@@ -33,7 +33,7 @@ fn get_version() -> Result<String, String> {
             }
         }
     }
-    Err("Could not find version in trance-daemon/Cargo.toml".to_string())
+    Err("Could not find version in idle-daemon/Cargo.toml".to_string())
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -67,8 +67,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Building Debian package...");
         run_cmd(Command::new("cargo").args(["deb", "--no-build", "-p", crate_name]))?;
 
-        let "idle" mapping
-            "trance"
+        // Deb/RPM metadata package names (may differ from crate name).
+        let pkg_name = if *crate_name == "idle-plugins-all" {
+            "idle-savers"
         } else {
             crate_name
         };
@@ -147,7 +148,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_cmd(Command::new("./update.sh").current_dir("../packages"))?;
 
     println!("==========================================");
-    println!("Trance build and package sync complete!");
+    println!("IdleScreen build and package sync complete!");
     println!("==========================================");
 
     print!("\nDo you want to commit and push these package updates to GitHub? (y/n): ");
@@ -160,7 +161,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let version = get_version()?;
         println!("Staging and committing packages in packages repository...");
         run_cmd(Command::new("git").args(["add", "."]).current_dir("../packages"))?;
-        run_cmd(Command::new("git").args(["commit", "-m", &format!("Release trance v{}", version)]).current_dir("../packages"))?;
+        run_cmd(Command::new("git").args(["commit", "-m", &format!("Release idle v{}", version)]).current_dir("../packages"))?;
         run_cmd(Command::new("git").args(["push", "origin", "main"]).current_dir("../packages"))?;
         println!("Push complete.");
     }

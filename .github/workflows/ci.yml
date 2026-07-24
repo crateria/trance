@@ -1,4 +1,4 @@
-# CI for idlescreen/idlescreen (daemon package name: idlescreen (crate trance-daemon))
+# CI for idlescreen/idlescreen (daemon package name: idlescreen (crate idle-daemon))
 name: CI
 
 on:
@@ -84,14 +84,14 @@ jobs:
       - name: cargo test (core + tui + cli)
         run: |
           cargo test \
-            -p trance-api \
-            -p trance-runner \
-            -p trance-dbus \
-            -p trance-upscaler \
+            -p idle-api \
+            -p idle-runner \
+            -p idle-dbus \
+            -p idle-upscaler \
             -p wayland-idle \
             -p wayland-present \
-            -p trance-daemon \
-            -p trance-cli \
+            -p idle-daemon \
+            -p idle-cli \
             --all-features
 
       - name: Install cargo-binstall
@@ -106,15 +106,15 @@ jobs:
       - name: Build release binaries
         run: |
           cargo build --release \
-            -p trance-daemon \
-            -p trance-cli \
-            -p trance-plugins-all \
+            -p idle-daemon \
+            -p idle-cli \
+            -p idle-plugins-all \
 
       - name: Verify package creation
         run: |
-          cargo deb --no-build -p trance-daemon
-          cargo deb --no-build -p trance-cli
-          cargo deb --no-build -p trance-plugins-all
-          cargo generate-rpm -p trance-daemon
-          cargo generate-rpm -p trance-cli
-          cargo generate-rpm -p trance-plugins-all
+          cargo deb --no-build -p idle-daemon
+          cargo deb --no-build -p idle-cli
+          cargo deb --no-build -p idle-plugins-all
+          cargo generate-rpm -p idle-daemon
+          cargo generate-rpm -p idle-cli
+          cargo generate-rpm -p idle-plugins-all

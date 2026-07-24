@@ -37,7 +37,7 @@ Engine packages (`idle-daemon`, `idle-cli`, `idle-savers`, `idle-saver-*`) are *
 ```bash
 git clone https://github.com/idlescreen/idle.git
 cd idle
-cargo build --release -p trance-daemon -p trance-cli  # binaries: idle-daemon, idlescreen
+cargo build --release -p idle-daemon -p idle-cli  # binaries: idle-daemon, idlescreen
 ```
 
 System dependencies (Debian/Ubuntu): `libdbus-1-dev libwayland-dev libxkbcommon-dev libssl-dev libpam0g-dev pkg-config`

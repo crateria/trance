@@ -12,7 +12,7 @@ Create a new library project using cargo:
 cargo new --lib screensaver_myplugin
 ```
 
-Modify the project's `Cargo.toml` to configure it as a dynamic C-compatible library and add the `trance-api` dependency:
+Modify the project's `Cargo.toml` to configure it as a dynamic C-compatible library and add the `idle-api` dependency:
 
 ```toml
 [package]
@@ -26,21 +26,21 @@ name = "screensaver_myplugin"
 crate-type = ["cdylib"]
 
 [dependencies]
-# Link to the trance-api dependency
-trance-api = { git = "https://github.com/idlescreen/idle-core.git", branch = "master" }
+# Link to the idle-api dependency
+idle-api = { git = "https://github.com/idlescreen/idle-core.git", branch = "master" }
 ```
 
 ---
 
 ## 2. Implementing the screensaver
 
-In your `src/lib.rs`, implement the `trance_api::Screensaver` trait for your screensaver structure.
+In your `src/lib.rs`, implement the `idle_api::Screensaver` trait for your screensaver structure.
 
 ### Example Code:
 
 ```rust
 use std::time::Duration;
-use trance_api::{Screensaver, ScreensaverInstance, TerminalCell};
+use idle_api::{Screensaver, ScreensaverInstance, TerminalCell};
 
 struct MyEffect {
     time: f32,
@@ -140,7 +140,7 @@ trance preview target/release/libscreensaver_myplugin.so
 ```
 
 ### Production Installation
-To make the plugin permanently available to your `trance-daemon` session:
+To make the plugin permanently available to your `idle-daemon` session:
 1. Copy the `.so` file to the user screensavers directory:
    ```bash
    mkdir -p ~/.local/share/trance/screensavers

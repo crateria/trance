@@ -25,7 +25,7 @@ Enforce on every change in this repository.
 ## Product identity
 
 - GitHub org and product brand: **IdleScreen** (`idlescreen`).
-- Historical crate, binary, and Debian package names (`trance`, `trance-*`)
+- Historical D-Bus wire names and CLI binary aliases (`trance`, `trance-daemon`); Cargo crates are `idle-*`
   remain for API and install stability until a coordinated major rename.
 - Historical D-Bus well-known names stay for ABI continuity.
 

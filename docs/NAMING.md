@@ -39,3 +39,18 @@ Not a user install unit.
 
 - D-Bus: `io.github.ubermetroid.trance`
 - Plugin stem: `libscreensaver_<name>.so`
+
+## Engine crates (workspace)
+
+| Crate | Role |
+|-------|------|
+| `idle-api` | Plugin host/plugin shared API |
+| `idle-runner` | Plugin load, raster, launcher |
+| `idle-daemon` | Background host binary crate |
+| `idle-cli` | CLI binary crate (`idle`) |
+| `idle-dbus` | D-Bus client/types (wire names historical) |
+| `idle-ipc` | SHM/UDS out-of-process IPC |
+| `idle-upscaler` | CPU frame upscaling |
+| `idle-plugins-all` | Meta package → ships as `idle-savers` |
+
+External plugins that used `trance-api` path deps should switch to `idle-api`.
