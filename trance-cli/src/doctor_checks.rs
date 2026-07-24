@@ -34,7 +34,6 @@ pub fn check_wayland() -> CheckResult {
     }
 }
 
-
 /// Soft protocol/DE hints for degraded environments (does not fail alone on unknown DE).
 pub fn check_protocol_hints() -> CheckResult {
     let de = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default();
@@ -46,9 +45,13 @@ pub fn check_protocol_hints() -> CheckResult {
             "WAYLAND_DISPLAY unset; need Wayland session with ext-idle-notify-v1 and zwlr_layer_shell_v1",
         );
     }
-    let known = ["cosmic", "Hyprland", "sway", "niri", "river", "wayfire", "KDE", "plasma"];
+    let known = [
+        "cosmic", "Hyprland", "sway", "niri", "river", "wayfire", "KDE", "plasma",
+    ];
     let lower = de.to_ascii_lowercase();
-    let friendly = known.iter().any(|k| lower.contains(&k.to_ascii_lowercase()));
+    let friendly = known
+        .iter()
+        .any(|k| lower.contains(&k.to_ascii_lowercase()));
     if friendly || de.is_empty() {
         chk(
             "Protocols",
@@ -74,7 +77,9 @@ pub fn check_dbus() -> CheckResult {
     if let Ok(client) = TranceClient::connect() {
         match client.get_status() {
             Ok(status) => {
-                println!(" [✔] D-Bus Service: Connected to io.github.ubermetroid.trance via D-Bus.");
+                println!(
+                    " [✔] D-Bus Service: Connected to io.github.ubermetroid.trance via D-Bus."
+                );
                 println!(
                     "     -> Status: idle_enabled={}, timeout={}m, active_saver='{}'",
                     status.idle_enabled, status.idle_timeout_mins, status.active_saver
@@ -91,7 +96,9 @@ pub fn check_dbus() -> CheckResult {
             }
         }
     } else {
-        println!(" [✗] D-Bus Service: Could not connect to io.github.ubermetroid.trance via D-Bus.");
+        println!(
+            " [✗] D-Bus Service: Could not connect to io.github.ubermetroid.trance via D-Bus."
+        );
         println!(
             "     -> Fix: Ensure trance-daemon is running (systemctl --user start trance-daemon)."
         );

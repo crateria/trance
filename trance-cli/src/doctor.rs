@@ -2,8 +2,8 @@ use anyhow::Result;
 use std::process::Command;
 
 use super::doctor_checks::{
-    CheckResult, check_config_parses, check_dbus, check_running_pid, check_shm_permissions,
-    check_systemd_service, check_wayland, check_yaml_syntax, check_protocol_hints,
+    CheckResult, check_config_parses, check_dbus, check_protocol_hints, check_running_pid,
+    check_shm_permissions, check_systemd_service, check_wayland, check_yaml_syntax,
 };
 use super::doctor_sys::{check_fonts, check_package_install};
 

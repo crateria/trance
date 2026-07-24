@@ -11,10 +11,7 @@ pub enum PresentationDecision {
         clear_preview: bool,
     },
     /// Start (or switch to) this saver.
-    Start {
-        name: String,
-        reason: &'static str,
-    },
+    Start { name: String, reason: &'static str },
 }
 
 /// Inputs for one idle-policy evaluation.

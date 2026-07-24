@@ -108,7 +108,6 @@ impl IpcPluginSession {
         Ok(())
     }
 
-
     /// True if the OOP plugin child is still running.
     pub fn is_plugin_alive(&mut self) -> bool {
         let Some(child) = self.child.as_mut() else {

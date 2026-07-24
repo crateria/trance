@@ -246,7 +246,6 @@ pub fn resolve_saver_binary(name: &str, mode: &LaunchMode) -> std::io::Result<Pa
 #[path = "launcher_tests.rs"]
 mod tests;
 
-
 #[cfg(test)]
 #[path = "launcher_proptest.rs"]
 mod proptests;

@@ -79,7 +79,6 @@ impl Default for SystemInfo {
     }
 }
 
-
 impl SystemInfo {
     /// Stable fixture for offline export (`TRANCE_EXPORT_MODE=1` / idle-render).
     pub fn export_fixture() -> Self {
