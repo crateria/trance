@@ -168,7 +168,7 @@ fn display_saver(name: &str) -> String {
 const CLI_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn print_version(verbose: bool) {
-    println!("trance {CLI_VERSION}");
+    println!("idlescreen {CLI_VERSION}");
     if !verbose {
         return;
     }

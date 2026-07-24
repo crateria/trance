@@ -16,33 +16,30 @@ pub fn check_fonts() -> CheckResult {
 }
 
 pub fn check_package_install() -> CheckResult {
-    if let Ok(o) = Command::new("rpm")
-        .args([
-            "-q",
-            "trance",
-            "--qf",
-            "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}",
-        ])
-        .output()
-        && o.status.success()
-    {
-        let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-        println!(" [✔] Package (RPM): {ver}");
-        println!("     -> Upgrade with: sudo dnf update");
-        return chk("Package", true, ver);
+    for pkg in ["idlescreen", "trance"] {
+        if let Ok(o) = Command::new("rpm")
+            .args(["-q", pkg, "--qf", "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}"])
+            .output()
+            && o.status.success()
+        {
+            let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
+            println!(" [✔] Package (RPM): {ver}");
+            println!("     -> Upgrade with: sudo dnf update");
+            return chk("Package", true, ver);
+        }
+        if let Ok(o) = Command::new("dpkg-query")
+            .args(["-W", "-f=${Package} ${Version}", pkg])
+            .output()
+            && o.status.success()
+        {
+            let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
+            println!(" [✔] Package (DEB): {ver}");
+            println!("     -> Upgrade with: sudo apt update && sudo apt upgrade");
+            return chk("Package", true, ver);
+        }
     }
-    if let Ok(o) = Command::new("dpkg-query")
-        .args(["-W", "-f=${Package} ${Version}", "trance"])
-        .output()
-        && o.status.success()
-    {
-        let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-        println!(" [✔] Package (DEB): {ver}");
-        println!("     -> Upgrade with: sudo apt update && sudo apt upgrade");
-        return chk("Package", true, ver);
-    }
-    println!(" [!] Package: trance not found via RPM or dpkg.");
-    println!("     -> Install from the crateria apt/dnf repository.");
+    println!(" [!] Package: idlescreen not found via RPM or dpkg.");
+    println!("     -> Install from https://idlescreen.github.io/packages/");
     chk("Package", true, "not a system package")
 }
 
