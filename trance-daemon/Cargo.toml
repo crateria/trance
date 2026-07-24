@@ -1,10 +1,15 @@
 [package]
 name = "trance-daemon"
-version = "1.0.46"
+version = "2.0.0"
 edition = "2024"
-description = "Background idle daemon and core package for trance screensavers"
+description = "IdleScreen background idle daemon (Wayland screensaver host)"
 license = "Apache-2.0"
 
+[[bin]]
+name = "idlescreen-daemon"
+path = "src/main.rs"
+
+# Transitional legacy binary name (same code).
 [[bin]]
 name = "trance-daemon"
 path = "src/main.rs"
@@ -33,67 +38,68 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 tracing-journald = "0.3.2"
 
 [package.metadata.deb]
-name = "trance"
+name = "idlescreen"
 changelog = "debian/changelog"
 copyright = "2026 IdleScreen"
 maintainer = "IdleScreen <jerydleuck@gmail.com>"
-extended-description = "Background idle monitoring service for trance screensavers."
-# NOTE (2026): `libvulkan1`/`libgl1` dependency removed — the previous
-# GPU upscaler was renamed to `trance-upscaler` and is now pure CPU code,
-# so neither graphics runtime is required at install time. Kept `dbus`
-# (session bus) and `trance-plugin-beams` (default saver).
-depends = "libc6, fonts-dejavu-core, trance-plugin-beams, dbus"
-# CLI/TUI/plugins are useful on any DE. COSMIC applet is *not* auto-installed:
-# GNOME/KDE/etc. users only need trance-tui or trance-cli. COSMIC users:
-#   sudo apt install trance-applet
-recommends = "trance-plugins-all, trance-cli, trance-tui"
-suggests = "trance-applet"
+extended-description = "IdleScreen background idle monitoring and screensaver host for Wayland."
+# Package rename from `trance`. Plugins renamed to saver-*.
+depends = "libc6, fonts-dejavu-core, saver-beams, dbus"
+provides = "trance"
+replaces = "trance"
+conflicts = "trance (<< 2.0.0)"
+recommends = "idlescreen-savers, idlescreen-cli, idlescreen-tui"
+suggests = "idlescreen-applet"
 section = "utils"
 priority = "optional"
 maintainer-scripts = "debian"
-# One start path only: systemd user unit (+ D-Bus activation). XDG autostart
-# was removed so upgrades/logins do not double-start or fight the unit.
 assets = [
+    ["target/release/idlescreen-daemon", "usr/bin/idlescreen-daemon", "755"],
     ["target/release/trance-daemon", "usr/bin/trance-daemon", "755"],
+    ["assets/idlescreen-daemon.service", "usr/lib/systemd/user/idlescreen-daemon.service", "644"],
     ["assets/trance-daemon.service", "usr/lib/systemd/user/trance-daemon.service", "644"],
     ["assets/io.github.ubermetroid.trance.service", "usr/share/dbus-1/services/io.github.ubermetroid.trance.service", "644"],
     ["assets/io.github.ubermetroid.trance.policy", "usr/share/polkit-1/actions/io.github.ubermetroid.trance.policy", "644"],
-    ["assets/trance-daemon.1", "usr/share/man/man1/trance-daemon.1", "644"],
-    ["assets/packaging/user-service-lib.sh", "usr/lib/trance/user-service-lib.sh", "644"],
+    ["assets/idlescreen-daemon.1", "usr/share/man/man1/idlescreen-daemon.1", "644"],
+    ["assets/packaging/user-service-lib.sh", "usr/lib/idlescreen/user-service-lib.sh", "644"],
 ]
 
 [package.metadata.generate-rpm]
-name = "trance"
+name = "idlescreen"
 release = "1"
 arch = "x86_64"
-summary = "Background idle daemon and core package for trance screensavers"
-description = "Background idle monitoring service for trance screensavers."
+summary = "IdleScreen background idle daemon"
+description = "IdleScreen background idle monitoring and screensaver host for Wayland."
 license = "Apache-2.0"
-# Soft user-service reload on install/upgrade (never fails the RPM transaction).
 post_install_script = "rpm/post.sh"
 pre_uninstall_script = "rpm/preun.sh"
-# After full transaction: recover if an old package's preun stopped the daemon.
 post_trans_script = "rpm/posttrans.sh"
 assets = [
+    { source = "target/release/idlescreen-daemon", dest = "/usr/bin/idlescreen-daemon", mode = "755", user = "root", group = "root" },
     { source = "target/release/trance-daemon", dest = "/usr/bin/trance-daemon", mode = "755", user = "root", group = "root" },
+    { source = "assets/idlescreen-daemon.service", dest = "/usr/lib/systemd/user/idlescreen-daemon.service", mode = "644", user = "root", group = "root" },
     { source = "assets/trance-daemon.service", dest = "/usr/lib/systemd/user/trance-daemon.service", mode = "644", user = "root", group = "root" },
     { source = "assets/io.github.ubermetroid.trance.service", dest = "/usr/share/dbus-1/services/io.github.ubermetroid.trance.service", mode = "644", user = "root", group = "root" },
     { source = "assets/io.github.ubermetroid.trance.policy", dest = "/usr/share/polkit-1/actions/io.github.ubermetroid.trance.policy", mode = "644", user = "root", group = "root" },
-    { source = "assets/trance-daemon.1", dest = "/usr/share/man/man1/trance-daemon.1", mode = "644", user = "root", group = "root" },
-    { source = "assets/packaging/user-service-lib.sh", dest = "/usr/lib/trance/user-service-lib.sh", mode = "644", user = "root", group = "root" },
+    { source = "assets/idlescreen-daemon.1", dest = "/usr/share/man/man1/idlescreen-daemon.1", mode = "644", user = "root", group = "root" },
+    { source = "assets/packaging/user-service-lib.sh", dest = "/usr/lib/idlescreen/user-service-lib.sh", mode = "644", user = "root", group = "root" },
 ]
 
 [package.metadata.generate-rpm.requires]
 dejavu-sans-mono-fonts = "*"
-trance-plugin-beams = "*"
+saver-beams = "*"
 
 [package.metadata.generate-rpm.recommends]
-trance-plugins-all = "*"
-trance-cli = "*"
-trance-tui = "*"
-# Rich weak dep: only pull the COSMIC panel applet when COSMIC panel is present.
-"(trance-applet if cosmic-panel)" = ""
+idlescreen-savers = "*"
+idlescreen-cli = "*"
+idlescreen-tui = "*"
+"(idlescreen-applet if cosmic-panel)" = ""
 
 [package.metadata.generate-rpm.suggests]
-# Fallback discovery for hosts without rich-dep resolution.
-trance-applet = "*"
+idlescreen-applet = "*"
+
+[package.metadata.generate-rpm.provides]
+trance = "*"
+
+[package.metadata.generate-rpm.obsoletes]
+trance = "*"

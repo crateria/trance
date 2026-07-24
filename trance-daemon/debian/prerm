@@ -29,8 +29,8 @@ _user_systemctl() {
 }
 
 try_stop_trance() {
-    echo "-> stop trance-daemon for $2 (remove)"
-    _user_systemctl "$1" "$2" stop trance-daemon.service || true
+    echo "-> stop idlescreen-daemon for $2 (remove)"
+    _user_systemctl "$1" "$2" stop idlescreen-daemon.service || true
 }
 
 case "${1:-}" in
@@ -44,7 +44,7 @@ esac
 
 if [ "${1:-}" = "remove" ]; then
     if command -v deb-systemd-helper >/dev/null 2>&1; then
-        deb-systemd-helper --user disable trance-daemon.service >/dev/null 2>&1 || true
+        deb-systemd-helper --user disable idlescreen-daemon.service >/dev/null 2>&1 || true
     fi
 fi
 

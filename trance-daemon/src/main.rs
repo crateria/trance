@@ -56,7 +56,9 @@ fn main() -> anyhow::Result<()> {
         let sub = &args[1];
         if sub == "run-plugin" {
             if args.len() < 3 {
-                eprintln!("error: missing saver name.\nusage: trance-daemon run-plugin <saver>");
+                eprintln!(
+                    "error: missing saver name.\nusage: idlescreen-daemon run-plugin <saver>"
+                );
                 std::process::exit(1);
             }
             let name = &args[2];
@@ -84,7 +86,7 @@ fn main() -> anyhow::Result<()> {
         } else if sub == "run-ipc-runner" {
             if args.len() < 9 {
                 eprintln!(
-                    "error: missing arguments.\nusage: trance-daemon run-ipc-runner <saver> <socket_path> <shm_name> <cols> <rows> <gpu_enabled> <render_scale>"
+                    "error: missing arguments.\nusage: idlescreen-daemon run-ipc-runner <saver> <socket_path> <shm_name> <cols> <rows> <gpu_enabled> <render_scale>"
                 );
                 std::process::exit(1);
             }
@@ -123,13 +125,13 @@ fn main() -> anyhow::Result<()> {
             daemon::run_daemon()?;
         } else if sub == "--help" || sub == "-h" {
             println!(
-                "trance-daemon — background idle monitoring service for trance
+                "idlescreen-daemon — background idle monitoring service for trance
 
 usage:
-  trance-daemon                     run the background idle daemon (default)
-  trance-daemon daemon | --daemon   run the background idle daemon
-  trance-daemon run-plugin <saver>  run a trusted screensaver plugin fullscreen
-  trance-daemon --help | -h         show this help message"
+  idlescreen-daemon                     run the background idle daemon (default)
+  idlescreen-daemon daemon | --daemon   run the background idle daemon
+  idlescreen-daemon run-plugin <saver>  run a trusted screensaver plugin fullscreen
+  idlescreen-daemon --help | -h         show this help message"
             );
         } else {
             eprintln!("unknown argument: {}\ntry --help", sub);

@@ -38,7 +38,7 @@ fn get_version() -> Result<String, String> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("==========================================");
-    println!("Building All Trance Packages via Rust...");
+    println!("Building All IdleScreen Packages via Rust...");
     println!("==========================================");
 
     // Clean stale packaging directories to avoid copying old versions
@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Building Debian package...");
         run_cmd(Command::new("cargo").args(["deb", "--no-build", "-p", crate_name]))?;
 
-        let pkg_name = if *crate_name == "trance-daemon" {
+        let "idlescreen" mapping
             "trance"
         } else {
             crate_name

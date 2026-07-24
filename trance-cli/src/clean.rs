@@ -12,9 +12,9 @@ pub fn handle_clean() -> Result<()> {
 
     // 1. PID File Cleanup
     let pid_path = if let Ok(runtime_dir) = std::env::var("XDG_RUNTIME_DIR") {
-        PathBuf::from(runtime_dir).join("trance-daemon.pid")
+        PathBuf::from(runtime_dir).join("idlescreen-daemon.pid")
     } else {
-        std::env::temp_dir().join("trance-daemon.pid")
+        std::env::temp_dir().join("idlescreen-daemon.pid")
     };
 
     if pid_path.exists() {
@@ -32,7 +32,7 @@ pub fn handle_clean() -> Result<()> {
 
     // 2. User Cache Directory Cleanup
     if let Ok(home) = std::env::var("HOME") {
-        let cache_dir = PathBuf::from(home).join(".cache").join("trance");
+        let cache_dir = PathBuf::from(home).join(".cache").join("idlescreen");
         if cache_dir.exists() {
             match fs::remove_dir_all(&cache_dir) {
                 Ok(()) => println!(" [✔] Cleared cache directory: '{}'", cache_dir.display()),

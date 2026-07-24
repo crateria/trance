@@ -58,11 +58,11 @@ fn fix_user_service_quiet() -> Result<()> {
         .args(["--user", "daemon-reload"])
         .status();
     let enable = Command::new("systemctl")
-        .args(["--user", "enable", "--now", "trance-daemon.service"])
+        .args(["--user", "enable", "--now", "idlescreen-daemon.service"])
         .status();
     if enable.map(|s| !s.success()).unwrap_or(true) {
         let _ = Command::new("systemctl")
-            .args(["--user", "restart", "trance-daemon.service"])
+            .args(["--user", "restart", "idlescreen-daemon.service"])
             .status();
     }
     Ok(())
@@ -70,7 +70,7 @@ fn fix_user_service_quiet() -> Result<()> {
 
 /// Best-effort recovery after package upgrade or a dead session service.
 fn fix_user_service() -> Result<()> {
-    println!("--fix: reloading and ensuring trance-daemon user service...");
+    println!("--fix: reloading and ensuring idlescreen-daemon user service...");
 
     let reload = Command::new("systemctl")
         .args(["--user", "daemon-reload"])
@@ -84,16 +84,16 @@ fn fix_user_service() -> Result<()> {
     }
 
     let enable = Command::new("systemctl")
-        .args(["--user", "enable", "--now", "trance-daemon.service"])
+        .args(["--user", "enable", "--now", "idlescreen-daemon.service"])
         .status();
     if let Ok(st) = enable
         && st.success()
     {
-        println!("  [ok] systemctl --user enable --now trance-daemon.service");
+        println!("  [ok] systemctl --user enable --now idlescreen-daemon.service");
     } else {
         println!("  [!] enable --now failed; attempting restart...");
         let _ = Command::new("systemctl")
-            .args(["--user", "restart", "trance-daemon.service"])
+            .args(["--user", "restart", "idlescreen-daemon.service"])
             .status();
     }
     Ok(())

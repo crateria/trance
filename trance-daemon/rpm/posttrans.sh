@@ -1,7 +1,7 @@
 #!/bin/sh
 # RPM %posttrans — runs after the *entire* transaction (installs + uninstalls).
 #
-# Purpose: after upgrades, your desktop user's trance-daemon is already on the
+# Purpose: after upgrades, your desktop user's idlescreen-daemon is already on the
 # new binary. You should not need to run systemctl yourself.
 #
 # Why posttrans (not only %post): DNF may run new %post, then old %preun. Older
@@ -10,8 +10,8 @@
 set -u
 
 # shellcheck disable=SC1091
-if [ -f /usr/lib/trance/user-service-lib.sh ]; then
-    . /usr/lib/trance/user-service-lib.sh
+if [ -f /usr/lib/idlescreen/user-service-lib.sh ]; then
+    . /usr/lib/idlescreen/user-service-lib.sh
 else
     is_desktop_uid() {
         case "$1" in ''|*[!0-9]*) return 1 ;; esac
@@ -45,10 +45,10 @@ else
             runuser -u "$_user" -- env \
                 XDG_RUNTIME_DIR="/run/user/$_uid" \
                 DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$_uid/bus" \
-                systemctl --user is-enabled trance-daemon.service >/dev/null 2>&1
+                systemctl --user is-enabled idlescreen-daemon.service >/dev/null 2>&1
             return $?
         fi
-        systemctl --user --machine="${_user}@" is-enabled trance-daemon.service >/dev/null 2>&1
+        systemctl --user --machine="${_user}@" is-enabled idlescreen-daemon.service >/dev/null 2>&1
     }
     _user_is_active() {
         _uid="$1"; _user="$2"
@@ -56,22 +56,22 @@ else
             runuser -u "$_user" -- env \
                 XDG_RUNTIME_DIR="/run/user/$_uid" \
                 DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$_uid/bus" \
-                systemctl --user is-active trance-daemon.service >/dev/null 2>&1
+                systemctl --user is-active idlescreen-daemon.service >/dev/null 2>&1
             return $?
         fi
-        systemctl --user --machine="${_user}@" is-active trance-daemon.service >/dev/null 2>&1
+        systemctl --user --machine="${_user}@" is-active idlescreen-daemon.service >/dev/null 2>&1
     }
     try_restart_trance() {
         _user_systemctl "$1" "$2" daemon-reload || true
-        _user_systemctl "$1" "$2" reset-failed trance-daemon.service || true
+        _user_systemctl "$1" "$2" reset-failed idlescreen-daemon.service || true
         if _user_is_enabled "$1" "$2"; then
             echo "trance: applying upgrade for $2 (user service)"
-            _user_systemctl "$1" "$2" restart trance-daemon.service || true
+            _user_systemctl "$1" "$2" restart idlescreen-daemon.service || true
             return 0
         fi
         if _user_is_active "$1" "$2"; then
             echo "trance: applying upgrade for $2 (running unit)"
-            _user_systemctl "$1" "$2" try-restart trance-daemon.service || true
+            _user_systemctl "$1" "$2" try-restart idlescreen-daemon.service || true
         fi
     }
 fi

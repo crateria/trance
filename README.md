@@ -25,7 +25,7 @@ sudo curl -fsSL https://idlescreen.github.io/packages/apt/crateria-keyring.gpg \
   -o /etc/apt/keyrings/idlescreen.gpg
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/idlescreen.gpg] https://idlescreen.github.io/packages/apt stable main" \
   | sudo tee /etc/apt/sources.list.d/idlescreen.list
-sudo apt update && sudo apt install trance
+sudo apt update && sudo apt install idlescreen
 ```
 
 ### Fedora
@@ -33,12 +33,12 @@ sudo apt update && sudo apt install trance
 ```bash
 sudo curl -fsSL https://idlescreen.github.io/packages/rpm/crateria.repo \
   -o /etc/yum.repos.d/idlescreen.repo
-sudo dnf install trance
+sudo dnf install idlescreen
 ```
 
 Keyring and repository drop-in filenames on the package host may still use a
 historical `crateria-*` prefix; the public host is **idlescreen.github.io**.
-Shipped package and binary names remain `trance` / `trance-*` for install and
+Shipped package and binary names remain `idlescreen` / `idlescreen-*` (legacy `trance*` still provided) for install and
 API stability.
 
 Optional packages: `trance-plugins-all`, `trance-cli` (TUI: [idle-tui](https://github.com/idlescreen/idle-tui)). COSMIC panel
@@ -50,7 +50,7 @@ separately.
 ```bash
 git clone https://github.com/idlescreen/idle-core.git
 cd idle-core
-cargo build --release -p trance-daemon -p trance-cli
+cargo build --release -p trance-daemon -p trance-cli  # binaries: idlescreen-daemon, idlescreen
 ```
 
 System dependencies (Debian/Ubuntu): `libdbus-1-dev libwayland-dev libxkbcommon-dev libssl-dev libpam0g-dev pkg-config`
@@ -81,7 +81,7 @@ session-level implant:
   without taking down the host daemon.
 - **Pure idle policy** — lock/inhibit/preview decisions are unit-tested without
   Wayland so regressions are cheap to catch.
-- **Doctor that ships** — `trance doctor` / `trance doctor --json` for
+- **Doctor that ships** — `idlescreen doctor` / `idlescreen doctor --json` for
   environment, D-Bus, service, and config health.
 
 ## Releases
@@ -104,16 +104,18 @@ session-level implant:
 ## Administration CLI
 
 ```bash
-trance status
-trance enable | disable
-trance preview <plugin>
-trance doctor
-trance doctor --json
+idlescreen status
+idlescreen enable | disable
+idlescreen preview <plugin>
+idlescreen doctor
+idlescreen doctor --json
 ```
 
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+See [docs/NAMING.md](docs/NAMING.md) for package rename map.
 
 ## Architecture boundaries
 

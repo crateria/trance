@@ -130,7 +130,9 @@ fn run(args: Vec<String>) -> Result<()> {
     let client = if daemon_available() {
         TranceClient::connect().context("failed to connect to daemon")?
     } else {
-        bail!("trance-daemon is not running; start it with: systemctl --user start trance-daemon");
+        bail!(
+            "idlescreen-daemon is not running; start it with: systemctl --user start idlescreen-daemon"
+        );
     };
 
     match head {

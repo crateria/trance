@@ -1,11 +1,11 @@
 #!/bin/sh
-# postrm script for trance-daemon
+# postrm script for idlescreen-daemon
 set -e
 
 if [ "$1" = "purge" ]; then
     # Purge the user service enable state globally using standard deb-systemd-helper
     if command -v deb-systemd-helper >/dev/null; then
-        deb-systemd-helper --user purge trance-daemon.service || true
+        deb-systemd-helper --user purge idlescreen-daemon.service || true
     fi
 fi
 

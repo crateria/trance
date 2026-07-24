@@ -6,9 +6,9 @@
 set -u
 
 # shellcheck disable=SC1091
-if [ -f /usr/lib/trance/user-service-lib.sh ]; then
+if [ -f /usr/lib/idlescreen/user-service-lib.sh ]; then
     # Prefer the just-installed copy.
-    . /usr/lib/trance/user-service-lib.sh
+    . /usr/lib/idlescreen/user-service-lib.sh
 else
     is_desktop_uid() {
         case "$1" in ''|*[!0-9]*) return 1 ;; esac
@@ -42,10 +42,10 @@ else
             runuser -u "$_user" -- env \
                 XDG_RUNTIME_DIR="/run/user/$_uid" \
                 DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$_uid/bus" \
-                systemctl --user is-enabled trance-daemon.service >/dev/null 2>&1
+                systemctl --user is-enabled idlescreen-daemon.service >/dev/null 2>&1
             return $?
         fi
-        systemctl --user --machine="${_user}@" is-enabled trance-daemon.service >/dev/null 2>&1
+        systemctl --user --machine="${_user}@" is-enabled idlescreen-daemon.service >/dev/null 2>&1
     }
     _user_is_active() {
         _uid="$1"; _user="$2"
@@ -53,10 +53,10 @@ else
             runuser -u "$_user" -- env \
                 XDG_RUNTIME_DIR="/run/user/$_uid" \
                 DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$_uid/bus" \
-                systemctl --user is-active trance-daemon.service >/dev/null 2>&1
+                systemctl --user is-active idlescreen-daemon.service >/dev/null 2>&1
             return $?
         fi
-        systemctl --user --machine="${_user}@" is-active trance-daemon.service >/dev/null 2>&1
+        systemctl --user --machine="${_user}@" is-active idlescreen-daemon.service >/dev/null 2>&1
     }
     try_reload_user_units() {
         if _user_is_enabled "$1" "$2" || _user_is_active "$1" "$2"; then
@@ -64,25 +64,25 @@ else
         fi
     }
     try_restart_trance() {
-        _user_systemctl "$1" "$2" reset-failed trance-daemon.service || true
+        _user_systemctl "$1" "$2" reset-failed idlescreen-daemon.service || true
         if _user_is_enabled "$1" "$2"; then
             echo "trance: applying upgrade for $2 (user service)"
-            _user_systemctl "$1" "$2" restart trance-daemon.service || true
+            _user_systemctl "$1" "$2" restart idlescreen-daemon.service || true
             return 0
         fi
         if _user_is_active "$1" "$2"; then
             echo "trance: applying upgrade for $2 (running unit)"
-            _user_systemctl "$1" "$2" try-restart trance-daemon.service || true
+            _user_systemctl "$1" "$2" try-restart idlescreen-daemon.service || true
         fi
     }
     print_user_hint() {
-        echo "  First-time: systemctl --user enable --now trance-daemon"
+        echo "  First-time: systemctl --user enable --now idlescreen-daemon"
         echo "  or: trance doctor --fix"
     }
 fi
 
 # Remove legacy XDG autostart (systemd user unit is the only start path).
-rm -f /etc/xdg/autostart/trance-daemon.desktop 2>/dev/null || true
+rm -f /etc/xdg/autostart/idlescreen-daemon.desktop 2>/dev/null || true
 
 for_each_user_session try_reload_user_units
 for_each_user_session try_restart_trance

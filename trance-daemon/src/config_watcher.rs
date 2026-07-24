@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-//! Hot-reload `~/.config/trance/config.yaml` without a Tokio runtime.
+//! Hot-reload `~/.config/idlescreen/config.yaml` (or legacy `trance`) without Tokio.
 //!
 //! The daemon main path is not Tokio-driven; only the D-Bus thread owns a
 //! runtime. Keep the notify watcher on a plain OS thread so startup cannot
@@ -15,7 +15,7 @@ use crate::config::DaemonConfig;
 use crate::controller::DaemonController;
 
 pub fn start_config_watcher(controller: Arc<DaemonController>) {
-    let Some(path) = DaemonConfig::get_config_path() else {
+    let Some(path) = DaemonConfig::resolve_config_path() else {
         return;
     };
     let Some(parent_dir) = path.parent() else {

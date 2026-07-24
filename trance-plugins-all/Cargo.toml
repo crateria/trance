@@ -1,8 +1,8 @@
 [package]
 name = "trance-plugins-all"
-version = "0.3.62"
+version = "2.0.0"
 edition = "2024"
-description = "Meta package that recommends all official trance screensaver plugins"
+description = "Meta package for all official IdleScreen saver plugins"
 license = "Apache-2.0"
 
 [lib]
@@ -10,36 +10,46 @@ path = "src/lib.rs"
 crate-type = ["rlib"]
 
 [package.metadata.deb]
-name = "trance-plugins-all"
+name = "idlescreen-savers"
 changelog = "debian/changelog"
 copyright = "2026 IdleScreen"
 maintainer = "IdleScreen <jerydleuck@gmail.com>"
-extended-description = "Convenience meta package that recommends the optional trance screensaver plugins. The stock beams effect ships with the core trance package."
-depends = "trance"
-recommends = "trance-plugin-bursts, trance-plugin-chaos, trance-plugin-cosmos, trance-plugin-glyphs, trance-plugin-gnats, trance-plugin-radar, trance-plugin-storm, trance-plugin-hearth, trance-plugin-ripple"
+extended-description = "Meta package for all official IdleScreen saver plugins. The default beams effect ships as saver-beams with the core package."
+depends = "idlescreen, saver-beams"
+recommends = "saver-bursts, saver-chaos, saver-cosmos, saver-glyphs, saver-gnats, saver-radar, saver-storm, saver-hearth, saver-ripple"
+provides = "trance-plugins-all"
+replaces = "trance-plugins-all"
+conflicts = "trance-plugins-all (<< 2.0.0)"
 section = "utils"
 priority = "optional"
 assets = []
 
 [package.metadata.generate-rpm]
-name = "trance-plugins-all"
+name = "idlescreen-savers"
 release = "1"
 arch = "noarch"
-summary = "Meta package recommending all official trance screensaver plugins"
-description = "Convenience meta package that recommends all official trance screensaver plugins."
+summary = "Meta package for all official IdleScreen savers"
+description = "Meta package recommending all official IdleScreen screensaver plugins."
 license = "Apache-2.0"
 assets = []
 
 [package.metadata.generate-rpm.requires]
-trance = "*"
+idlescreen = "*"
+saver-beams = "*"
 
 [package.metadata.generate-rpm.recommends]
-trance-plugin-bursts = "*"
-trance-plugin-chaos = "*"
-trance-plugin-cosmos = "*"
-trance-plugin-glyphs = "*"
-trance-plugin-gnats = "*"
-trance-plugin-radar = "*"
-trance-plugin-storm = "*"
-trance-plugin-hearth = "*"
-trance-plugin-ripple = "*"
+saver-bursts = "*"
+saver-chaos = "*"
+saver-cosmos = "*"
+saver-glyphs = "*"
+saver-gnats = "*"
+saver-radar = "*"
+saver-storm = "*"
+saver-hearth = "*"
+saver-ripple = "*"
+
+[package.metadata.generate-rpm.provides]
+trance-plugins-all = "*"
+
+[package.metadata.generate-rpm.obsoletes]
+trance-plugins-all = "*"

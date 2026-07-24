@@ -1,4 +1,4 @@
-# CI for idlescreen/idlescreen (daemon package name: trance)
+# CI for idlescreen/idlescreen (daemon package name: idlescreen (crate trance-daemon))
 name: CI
 
 on:

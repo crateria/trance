@@ -1,4 +1,4 @@
 [D-BUS Service]
 Name=io.github.ubermetroid.trance
-Exec=/usr/bin/trance-daemon daemon
-SystemdService=trance-daemon.service
+Exec=/usr/bin/idlescreen-daemon daemon
+SystemdService=idlescreen-daemon.service

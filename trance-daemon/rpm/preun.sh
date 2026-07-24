@@ -6,8 +6,8 @@
 set -u
 
 # shellcheck disable=SC1091
-if [ -f /usr/lib/trance/user-service-lib.sh ]; then
-    . /usr/lib/trance/user-service-lib.sh
+if [ -f /usr/lib/idlescreen/user-service-lib.sh ]; then
+    . /usr/lib/idlescreen/user-service-lib.sh
 else
     is_desktop_uid() {
         case "$1" in ''|*[!0-9]*) return 1 ;; esac
@@ -36,7 +36,7 @@ else
         systemctl --user --machine="${_user}@" "$@" 2>/dev/null || true
     }
     try_stop_trance() {
-        _user_systemctl "$1" "$2" stop trance-daemon.service || true
+        _user_systemctl "$1" "$2" stop idlescreen-daemon.service || true
     }
 fi
 
@@ -47,7 +47,7 @@ fi
 
 # Full uninstall only.
 try_disable() {
-    _user_systemctl "$1" "$2" disable trance-daemon.service || true
+    _user_systemctl "$1" "$2" disable idlescreen-daemon.service || true
 }
 
 for_each_user_session try_stop_trance

@@ -37,25 +37,50 @@ impl Default for DaemonConfig {
 }
 
 impl DaemonConfig {
-    pub fn get_config_path() -> Option<PathBuf> {
-        if let Some(xdg_config) = std::env::var("XDG_CONFIG_HOME")
+    /// Config directory candidates: IdleScreen first, legacy `trance` second.
+    pub fn config_dir_candidates() -> Vec<PathBuf> {
+        let mut bases = Vec::new();
+        if let Some(xdg) = std::env::var("XDG_CONFIG_HOME")
             .ok()
             .filter(|s| !s.is_empty())
         {
-            return Some(PathBuf::from(xdg_config).join("trance").join("config.yaml"));
+            bases.push(PathBuf::from(xdg));
         }
-        let home = std::env::var("HOME").ok()?;
-        Some(
-            PathBuf::from(home)
-                .join(".config")
-                .join("trance")
-                .join("config.yaml"),
-        )
+        if let Ok(home) = std::env::var("HOME") {
+            bases.push(PathBuf::from(home).join(".config"));
+        }
+        let mut dirs = Vec::new();
+        for base in bases {
+            dirs.push(base.join("idlescreen"));
+            dirs.push(base.join("trance"));
+        }
+        dirs
+    }
+
+    /// Path used for **writes** and new installs (`~/.config/idlescreen/config.yaml`).
+    pub fn get_config_path() -> Option<PathBuf> {
+        Self::config_dir_candidates()
+            .into_iter()
+            .find(|d| d.ends_with("idlescreen"))
+            .map(|d| d.join("config.yaml"))
+    }
+
+    /// Resolve existing config for **reads**: prefer IdleScreen, fall back to legacy.
+    pub fn resolve_config_path() -> Option<PathBuf> {
+        let candidates: Vec<PathBuf> = Self::config_dir_candidates()
+            .into_iter()
+            .map(|d| d.join("config.yaml"))
+            .collect();
+        candidates
+            .iter()
+            .find(|p| p.is_file())
+            .cloned()
+            .or_else(|| candidates.into_iter().next())
     }
 
     pub fn load() -> Self {
         let mut config = Self::default();
-        if let Some(Ok(content)) = Self::get_config_path().map(fs::read_to_string) {
+        if let Some(Ok(content)) = Self::resolve_config_path().map(fs::read_to_string) {
             for line in content.lines() {
                 let line = line.trim();
                 if line.is_empty() || line.starts_with('#') {

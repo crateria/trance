@@ -1,9 +1,13 @@
 [package]
 name = "trance-cli"
-version = "1.0.46"
+version = "2.0.0"
 edition = "2024"
-description = "Command-line interface for the trance screensaver daemon"
+description = "Command-line interface for the IdleScreen daemon"
 license = "Apache-2.0"
+
+[[bin]]
+name = "idlescreen"
+path = "src/main.rs"
 
 [[bin]]
 name = "trance"
@@ -25,24 +29,41 @@ tracing-subscriber = { workspace = true }
 tracing-journald = { workspace = true, optional = true }
 
 [package.metadata.deb]
-name = "trance-cli"
+name = "idlescreen-cli"
 changelog = "debian/changelog"
 copyright = "2026 IdleScreen"
 maintainer = "IdleScreen <jerydleuck@gmail.com>"
-extended-description = "Thin CLI for controlling the trance screensaver daemon over D-Bus."
-depends = "libc6, trance"
+extended-description = "CLI for controlling the IdleScreen daemon over D-Bus."
+depends = "libc6, idlescreen"
+provides = "trance-cli"
+replaces = "trance-cli"
+conflicts = "trance-cli (<< 2.0.0)"
 section = "utils"
 priority = "optional"
 assets = [
+    ["target/release/idlescreen", "usr/bin/idlescreen", "755"],
     ["target/release/trance", "usr/bin/trance", "755"],
-    ["trance.1", "usr/share/man/man1/trance.1", "644"]
+    ["trance.1", "usr/share/man/man1/idlescreen.1", "644"],
 ]
 
 [package.metadata.generate-rpm]
+name = "idlescreen-cli"
+release = "1"
+arch = "x86_64"
+summary = "IdleScreen command-line interface"
+description = "CLI for controlling the IdleScreen daemon over D-Bus."
+license = "Apache-2.0"
 assets = [
+    { source = "target/release/idlescreen", dest = "/usr/bin/idlescreen", mode = "755", user = "root", group = "root" },
     { source = "target/release/trance", dest = "/usr/bin/trance", mode = "755", user = "root", group = "root" },
-    { source = "trance.1", dest = "/usr/share/man/man1/trance.1", mode = "644", user = "root", group = "root" }
+    { source = "trance.1", dest = "/usr/share/man/man1/idlescreen.1", mode = "644", user = "root", group = "root" },
 ]
 
 [package.metadata.generate-rpm.requires]
-trance = "*"
+idlescreen = "*"
+
+[package.metadata.generate-rpm.provides]
+trance-cli = "*"
+
+[package.metadata.generate-rpm.obsoletes]
+trance-cli = "*"

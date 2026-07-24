@@ -11,15 +11,18 @@ use std::path::PathBuf;
 pub fn get_screensaver_dirs() -> Vec<PathBuf> {
     let mut dirs = Vec::new();
 
-    // 1. System canonical paths (package-managed; preferred)
+    // 1. System canonical paths (IdleScreen first; trance legacy still searched)
+    dirs.push(PathBuf::from("/usr/libexec/idlescreen/screensavers"));
+    dirs.push(PathBuf::from("/usr/local/libexec/idlescreen/screensavers"));
     dirs.push(PathBuf::from("/usr/libexec/trance/screensavers"));
     dirs.push(PathBuf::from("/usr/local/libexec/trance/screensavers"));
 
-    // 2. System paths from XDG_DATA_DIRS (fallback /usr/local/share, /usr/share)
+    // 2. System paths from XDG_DATA_DIRS
     let xdg_data_dirs = std::env::var("XDG_DATA_DIRS")
         .unwrap_or_else(|_| "/usr/local/share:/usr/share".to_string());
     for part in xdg_data_dirs.split(':') {
         if !part.is_empty() {
+            dirs.push(PathBuf::from(part).join("idlescreen").join("screensavers"));
             dirs.push(PathBuf::from(part).join("trance").join("screensavers"));
         }
     }
@@ -27,24 +30,31 @@ pub fn get_screensaver_dirs() -> Vec<PathBuf> {
     // 3. User paths last (optional overrides only when system copy is absent)
     if let Ok(xdg_data) = std::env::var("XDG_DATA_HOME") {
         if !xdg_data.is_empty() {
+            dirs.push(
+                PathBuf::from(&xdg_data)
+                    .join("idlescreen")
+                    .join("screensavers"),
+            );
             dirs.push(PathBuf::from(xdg_data).join("trance").join("screensavers"));
         }
     } else if let Ok(home) = std::env::var("HOME") {
         let home_path = PathBuf::from(home);
-        dirs.push(
-            home_path
-                .join(".local")
-                .join("share")
-                .join("trance")
-                .join("screensavers"),
-        );
-        dirs.push(
-            home_path
-                .join(".local")
-                .join("libexec")
-                .join("trance")
-                .join("screensavers"),
-        );
+        for brand in ["idlescreen", "trance"] {
+            dirs.push(
+                home_path
+                    .join(".local")
+                    .join("share")
+                    .join(brand)
+                    .join("screensavers"),
+            );
+            dirs.push(
+                home_path
+                    .join(".local")
+                    .join("libexec")
+                    .join(brand)
+                    .join("screensavers"),
+            );
+        }
     }
 
     dirs

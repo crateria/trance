@@ -1,3 +1,9 @@
+idlescreen (2.0.0-1) unstable; urgency=medium
+
+  * Rename package trance -> idlescreen; binary idlescreen-daemon.
+
+ -- IdleScreen <jerydleuck@gmail.com>  Thu, 23 Jul 2026 15:42:36 -1000
+
 trance (0.3.43-1) unstable; urgency=medium
 
   * Update repository workflow comment header.
@@ -18,7 +24,7 @@ trance (0.3.41-1) unstable; urgency=medium
 
 trance (0.3.40-1) unstable; urgency=medium
 
-  * Fix trance-daemon unit tests by mocking system D-Bus checks.
+  * Fix idlescreen-daemon unit tests by mocking system D-Bus checks.
 
  -- crateria <jerydleuck@gmail.com>  Fri, 10 Jul 2026 17:33:00 -1000
 
@@ -44,7 +50,7 @@ trance (0.3.37-1) unstable; urgency=medium
 
 trance (0.3.36-1) unstable; urgency=medium
 
-  * Fix: upgrades no longer leave trance-daemon stopped.
+  * Fix: upgrades no longer leave idlescreen-daemon stopped.
   * RPM: skip stop on upgrade preun; posttrans restarts if enabled.
   * Deb: prerm only stops on remove; postinst restarts if enabled.
 
@@ -88,14 +94,14 @@ trance (0.3.30-1) unstable; urgency=medium
 
   * UI polish: clearer daemon status in applet and TUI.
   * Title-case screensaver names; preview/start labels reflect offline state.
-  * Align TUI with enable --now and trance-daemon run-plugin preview fallback.
+  * Align TUI with enable --now and idlescreen-daemon run-plugin preview fallback.
 
  -- crateria <jerydleuck@gmail.com>  Thu, 09 Jul 2026 08:30:00 -1000
 
 trance (0.3.29-1) unstable; urgency=medium
 
   * Applet polish: enable --now when starting daemon; keep unit enabled on stop.
-  * Preview starts daemon if needed; fallback to trance-daemon run-plugin (not trance-runner).
+  * Preview starts daemon if needed; fallback to idlescreen-daemon run-plugin (not trance-runner).
   * Applet README: COSMIC-optional install notes.
 
  -- crateria <jerydleuck@gmail.com>  Thu, 09 Jul 2026 08:00:00 -1000
